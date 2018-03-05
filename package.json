@@ -1,0 +1,7 @@
+{
+  "name": "uliza-answers-connector",
+  "main": "index.js",
+  "dependencies": {
+    "body-parser": "^1.18.2"
+  }
+}
