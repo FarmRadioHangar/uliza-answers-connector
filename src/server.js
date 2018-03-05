@@ -20,11 +20,11 @@ router.post('/update', function(req, res) {
   return Promise.resolve()
   .then(function() {
     api.assertBodyField(req, 'delivery_status');
-    var deliveryStatus = Number(req.body.delivery_status);
+    var deliveryStatus = Number(req.body.delivery_status),
+        humanReadable = viamo.deliveryStatus(deliveryStatus);
     console.log(
       chalk.cyan('[viamo_call_status_update] ') + JSON.stringify(req.body)
     );
-    var humanReadable = viamo.deliveryStatus(deliveryStatus);
     console.log(
       chalk.cyan('[delivery_status] ')
       + deliveryStatus + ': '
