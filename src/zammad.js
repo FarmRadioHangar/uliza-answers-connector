@@ -9,25 +9,22 @@ var zammad = requestJson.createClient(ZAMMAD_API_URL);
 
 zammad.headers['Authorization'] = 'Token token=' + ZAMMAD_API_TOKEN;
 
-function zammadGet(uri, respCodes) {
-  return api.makeRequest(zammad, uri, respCodes, 'GET');
-}
-
-function zammadPost(uri, data, respCodes) {
-  return api.makeRequest(zammad, uri, respCodes, 'POST', data);
-}
-
-function zammadPut(uri, data, respCodes) {
-  return api.makeRequest(zammad, uri, respCodes, 'PUT', data);
-}
-
-function zammadPatch(uri, data, respCodes) {
-  return api.makeRequest(zammad, uri, respCodes, 'PATCH', data);
-}
-
 module.exports = {
-  get: zammadGet,
-  post: zammadPost,
-  put: zammadPut,
-  patch: zammadPatch
+
+  get: function(uri, respCodes) {
+    return api.makeRequest(zammad, uri, respCodes, 'GET');
+  },
+
+  post: function(uri, data, respCodes) {
+    return api.makeRequest(zammad, uri, respCodes, 'POST', data);
+  },
+
+  put: function(uri, data, respCodes) {
+    return api.makeRequest(zammad, uri, respCodes, 'PUT', data);
+  },
+
+  patch: function(uri, data, respCodes) {
+    return api.makeRequest(zammad, uri, respCodes, 'PATCH', data);
+  }
+
 };
