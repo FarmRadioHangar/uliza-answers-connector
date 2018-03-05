@@ -164,13 +164,85 @@ function zammadPatch(uri, data, respCodes) {
   return makeRequest(zammad, uri, respCodes, 'PATCH', data);
 }
 
-router.post('/responses', function(req, res) {
+function assertBodyField(request, field) {
+  if (!request.body[field]) {
+    var msg = 'Missing field ' + field + ' in webhook request body.';
+    console.error(chalk.redBright('[bad_webhook] ') + msg);
+    throw badRequest(msg, 'badWebhook');
+  }
+}
+
+router.post('/update', function(req, res) {
   return Promise.resolve()
   .then(function() {
-    // ...
-    res.json({
-      msg: 'OK'
-    });
+    assertBodyField(req, 'delivery_status');
+    switch (req.body.delivery_status) {
+      case 1:
+      case '1':
+        /* Queued */
+        break;
+      case 2:
+      case '2':
+        /* Ringing */
+        break;
+      case 3:
+      case '3':
+        /* In Progress */
+        break;
+      case 4:
+      case '4':
+        /* Waiting to retry: Call not connected on previous attempt, will
+         * retry */
+        break;
+      case 5:
+      case '5':
+        /* Failed (No Answer): Call was not answered */
+        break;
+      case 6:
+      case '6':
+        /* Finished (Complete): Call was answered, and subscriber hung up after
+         * completing the content */
+        break;
+      case 7:
+      case '7':
+        /* Finished (Incomplete): Call was answered, but subscriber hung up
+         * without completing the content */
+        break;
+      case 8:
+      case '8':
+        /* Failed (No Viamo Credit): Insufficient credit to complete call */
+        break;
+      case 9:
+      case '9':
+        /* Failed (Network): Call failed due to network conditions */
+        break;
+      case 10:
+      case '10':
+        /* Failed (Cancelled): Account user cancelled the call */
+        break;
+      case 11:
+      case '11':
+        /* Sent: Only relevant for SMS: sent to gateway, with no delivery
+         * report yet */
+        break;
+      case 12:
+      case '12':
+        /* Finished (Voicemail): Reached voicemail; Played the prompt message
+         * into voicemail */
+        break;
+      case 13:
+      case '13':
+        /* Failed (Voicemail): Call hung up on reaching voicemail */
+        break;
+      case 14:
+      case '14':
+        /* Failed (Error) */
+        break;
+      default:
+        /* Invalid status code */
+        break;
+    }
+    res.json({msg: 'OK'});
   })
   .catch(function(error) {
     var response = { error: error.error };
