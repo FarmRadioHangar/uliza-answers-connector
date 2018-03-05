@@ -67,7 +67,7 @@ router.post('/update', function(req, res) {
       default: /* Invalid status code */
         break;
     }
-    res.json({msg: 'OK'});
+    res.json();
   })
   .catch(function(error) {
     var response = { error: error.error };
