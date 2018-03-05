@@ -177,27 +177,27 @@ function viamoDeliveryStatus(code) {
     case 1: return  ['Queued', ''];
     case 2: return  ['Ringing', ''];
     case 3: return  ['In Progress', ''];
-    case 4: return  ['Waiting to retry', 
+    case 4: return  ['Waiting to retry',
       'Call not connected on previous attempt, will retry'];
-    case 5: return  ['Failed (No Answer)', 
+    case 5: return  ['Failed (No Answer)',
       'Call was not answered'];
-    case 6: return  ['Finished (Complete)', 
+    case 6: return  ['Finished (Complete)',
       'Call was answered, and subscriber hung up after completing the content'];
-    case 7: return  ['Finished (Incomplete)', 
+    case 7: return  ['Finished (Incomplete)',
       'Call was answered, but subscriber hung up without completing the content'];
-    case 8: return  ['Failed (No Viamo Credit)', 
+    case 8: return  ['Failed (No Viamo Credit)',
       'Insufficient credit to complete call'];
-    case 9: return  ['Failed (Network)', 
+    case 9: return  ['Failed (Network)',
       'Call failed due to network conditions beyond Viamo'];
-    case 10: return ['Failed (Cancelled)', 
+    case 10: return ['Failed (Cancelled)',
       'Account user cancelled the call'];
-    case 11: return ['Sent', 
+    case 11: return ['Sent',
       'Only relevant for SMS: sent to gateway, with no delivery report yet'];
-    case 12: return ['Finished (Voicemail)', 
+    case 12: return ['Finished (Voicemail)',
       'Reached voicemail; Played the prompt message into voicemail'];
-    case 13: return ['Failed (Voicemail)', 
+    case 13: return ['Failed (Voicemail)',
       'Call hung up on reaching voicemail'];
-    case 14: return ['Failed (Error)', '']; 
+    case 14: return ['Failed (Error)', ''];
     default: return ['Invalid Status Code', ''];
   }
 }
@@ -212,8 +212,8 @@ router.post('/update', function(req, res) {
     );
     var humanReadable = viamoDeliveryStatus(deliveryStatus);
     console.log(
-      chalk.cyan('[delivery_status] ') 
-      + deliveryStatus + ': ' 
+      chalk.cyan('[delivery_status] ')
+      + deliveryStatus + ': '
       + humanReadable[0]
     );
     if (humanReadable[1]) {
