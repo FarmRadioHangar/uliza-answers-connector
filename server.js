@@ -190,7 +190,7 @@ viamoGet('languages') /* Basic connectivity test of arbitrary endpoint. */
 })
 .then(function() {
   console.log('Viamo API connection OK.');
-  return zammadGet('roles'); /* Again, just a random endpoint. */
+  return zammadGet('users/me');
 })
 .catch(function(error) {
   console.error('Failed connecting to Zammad API on ' + ZAMMAD_API_URL + '.');
