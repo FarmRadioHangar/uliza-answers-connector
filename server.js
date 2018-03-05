@@ -140,6 +140,25 @@ function zammadGet(uri, respCodes) {
   return makeRequest(zammad, uri, respCodes, 'GET');
 }
 
+router.post('/responses', function(req, res) {
+  return Promise.resolve()
+  .then(function() {
+    // ...
+    res.json({
+      msg: 'OK'
+    });
+  })
+  .catch(function(error) {
+    var response = { error: error.error };
+    if (error.message) {
+      response.message = error.message;
+    }
+    res.status(error.status || 500);
+    res.json(response);
+    console.error(chalk.redBright(JSON.stringify(response)));
+  });
+});
+
 viamoGet('languages') /* Basic connectivity test of arbitrary endpoint. */
 .catch(function(error) {
   console.error('Failed connecting to Viamo API on ' + VIAMO_API_URL + '.');
