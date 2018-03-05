@@ -136,8 +136,32 @@ function viamoGet(uri, respCodes) {
   return makeRequest(viamo, uri, respCodes, 'GET');
 }
 
+function viamoPost(uri, data, respCodes) {
+  return makeRequest(viamo, uri, respCodes, 'POST', data);
+}
+
+function viamoPut(uri, data, respCodes) {
+  return makeRequest(viamo, uri, respCodes, 'PUT', data);
+}
+
+function viamoPatch(uri, data, respCodes) {
+  return makeRequest(viamo, uri, respCodes, 'PATCH', data);
+}
+
 function zammadGet(uri, respCodes) {
   return makeRequest(zammad, uri, respCodes, 'GET');
+}
+
+function zammadPost(uri, data, respCodes) {
+  return makeRequest(zammad, uri, respCodes, 'POST', data);
+}
+
+function zammadPut(uri, data, respCodes) {
+  return makeRequest(zammad, uri, respCodes, 'PUT', data);
+}
+
+function zammadPatch(uri, data, respCodes) {
+  return makeRequest(zammad, uri, respCodes, 'PATCH', data);
 }
 
 router.post('/responses', function(req, res) {
