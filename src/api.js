@@ -1,24 +1,8 @@
 var chalk = require('chalk');
 
-function errorMsg(code, error, message) {
-  var resp = {
-    status: code
-  };
-  if (error) {
-    resp.error = error;
-  }
-  if (message) {
-    resp.message = message;
-  }
-  return resp;
-}
-
 function buildRequest(yield) {
   return new Promise(function(resolve, reject) {
     var callback = function(error, response, body) {
-      if (error) {
-        return reject(error);
-      }
       if (isOk(response.statusCode)) {
         console.log(
           chalk.yellow('[response_code] ')
@@ -31,10 +15,12 @@ function buildRequest(yield) {
           chalk.redBright('[response_code] ')
           + chalk.white(response.statusCode)
         );
-        console.log(
-          chalk.redBright('[response_body] ')
-          + JSON.stringify(response.body)
-        );
+        if (!error) {
+          console.log(
+            chalk.redBright('[response_body] ')
+            + JSON.stringify(response.body)
+          );
+        }
       }
       resolve({
         all: response,
@@ -55,30 +41,11 @@ function validate(response, allowed) {
     console.error(chalk.redBright(
       response.body.message || response.body
     ));
-    throw badGateway(
-      'serverNon200Response',
-      'Server returned a ' + code + ' status code.'
-    );
+    throw new Error('Server returned a non-200 response code.');
   }
 }
 
 module.exports = {
-
-  badRequest: function(message, error) {
-    return errorMsg(400, error || 'badRequest', message);
-  },
-
-  notFound: function(message, error) {
-    return errorMsg(404, error || 'notFound', message);
-  },
-
-  badGateway: function(message, error) {
-    return errorMsg(502, error || 'badGateway', message);
-  },
-
-  internalServerError: function(message, error) {
-    return errorMsg(500, error || 'internalServerError', message);
-  },
 
   makeRequest: function(client, uri, respCodes, method, data) {
     console.log(
@@ -105,7 +72,7 @@ module.exports = {
     if (!request.body[field]) {
       var msg = 'Missing field ' + field + ' in webhook request body.';
       console.error(chalk.redBright('[bad_webhook] ') + msg);
-      throw badRequest(msg, 'badWebhook');
+      throw new Error('Invalid webhook request object.');
     }
   }
 

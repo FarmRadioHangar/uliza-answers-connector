@@ -47,7 +47,6 @@ router.post('/update', function(req, res) {
       case 5:  /* Failed (No Answer) */
         break;
       case 6:  /* Finished (Complete) */
-        break;
       case 7:  /* Finished (Incomplete) */
         break;
       case 8:  /* Failed (No Viamo Credit) */
