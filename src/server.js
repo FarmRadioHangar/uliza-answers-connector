@@ -1,7 +1,5 @@
 require('dotenv').config();
-
-var bodyparser = require('body-parser');
-var chalk      = require('chalk');
+var bodyparser = require('body-parser'); var chalk      = require('chalk');
 var express    = require('express');
 var api        = require('./api');
 var viamo      = require('./viamo');
@@ -16,39 +14,8 @@ var SERVER_PORT = process.env.PORT || 8099;
 
 var router = express.Router();
 
-/*
-  {
-    id: "2219030",
-    schedule_type: "1",
-    send_to_all: "0",
-    has_sms: "0",
-    has_voice: "1",
-    message_id: null,
-    survey_id: null,
-    tree_id: "22881",
-    poll_id: null,
-    routine_days: null,
-    scheduled_date: "2018-03-06",
-    queued_on: "2018-03-06 07:03:52",
-    open_time: "12:00:00",
-    close_time: "01:00:00",
-    retry_attempts_short: "3",
-    retry_attempts_long: "1",
-    retry_delay_short: "1",
-    retry_delay_long: "60",
-    retry_count_short: "0",
-    retry_count_long: "0",
-    created_at: "2018-03-06 07:03:45",
-    updated_at: "2018-03-06 07:03:52",
-    webhook: {
-      url: "http://376c618b.ngrok.io/update",
-      method: "POST",
-      secret: ""
-    }
-  }
-*/
 function processCall(id) {
-  return viamo.get('outgoing_calls/' + id, [404])
+  return viamo.get('outgoing_calls/' + id + '/delivery_logs', [404])
   .then(function(response) {
     if (404 == response.all.statusCode) {
       console.error(chalk.redBright('[bad_webhook_request] ')
@@ -56,12 +23,32 @@ function processCall(id) {
       );
       throw new Error('Invalid Viamo call ID.');
     }
-    return response.body.data.outgoing_call;
+    return response.body.data.delivery_logs;
   })
-  .then(function(call) {
+  .then(function(logs) {
+    if (!logs || 0 == logs.length) {
+      throw new Error('Empty delivery log.');
+    }
+    var log = logs[0];
     console.log(
-      chalk.cyan('[tree_id] ') + call.tree_id
+      chalk.cyan('[tree_id] ') + log.tree_id
     );
+    var url = 'trees/' + log.tree_id + '/delivery_logs/' + log.id;
+    return viamo.get(url);
+  })
+  .then(function(response) {
+    return response.body.data;
+  })
+  .then(function(data) {
+    var interactions = data.interactions
+        deliveryLog = data.delivery_log,
+        tree = data.tree;
+
+        // 9761370
+
+    // Get audio and send it to Zammad?
+
+    //console.log(interactions);
   });
 }
 
