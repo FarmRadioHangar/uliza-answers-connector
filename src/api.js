@@ -63,14 +63,6 @@ module.exports = {
       validate(response, respCodes || []);
       return response;
     });
-  },
-
-  assertBodyField: function(request, field) {
-    if (!request.body[field]) {
-      var msg = 'Missing field ' + field + ' in webhook request body.';
-      console.error(chalk.redBright('[bad_webhook] ') + msg);
-      throw new Error('Invalid webhook request object.');
-    }
   }
 
 };

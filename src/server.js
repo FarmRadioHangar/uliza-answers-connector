@@ -132,12 +132,20 @@ function processCall(id) {
   });
 }
 
+function assertBodyField(request, field) {
+  if (!request.body[field]) {
+    var msg = 'Missing field ' + field + ' in webhook request body.';
+    console.error(chalk.redBright('[bad_webhook] ') + msg);
+    throw new Error('Invalid webhook request object.');
+  }
+}
+
 router.post('/update', function(req, res) {
   res.json(); /* The response here doesn't really matter. */
   return Promise.resolve()
   .then(function() {
-    api.assertBodyField(req, 'delivery_status');
-    api.assertBodyField(req, 'outgoing_call_id');
+    assertBodyField(req, 'delivery_status');
+    assertBodyField(req, 'outgoing_call_id');
     var deliveryStatus = Number(req.body.delivery_status),
         outgoingCallId = req.body.outgoing_call_id,
         humanReadable  = viamo.deliveryStatus(deliveryStatus);
