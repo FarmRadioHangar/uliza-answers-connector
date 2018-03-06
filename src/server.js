@@ -73,7 +73,7 @@ router.post('/update', function(req, res) {
     api.assertBodyField(req, 'outgoing_call_id');
     var deliveryStatus = Number(req.body.delivery_status),
         outgoingCallId = req.body.outgoing_call_id,
-        humanReadable = viamo.deliveryStatus(deliveryStatus);
+        humanReadable  = viamo.deliveryStatus(deliveryStatus);
     console.log(
       chalk.cyan('[viamo_call_status_update] ') + JSON.stringify(req.body)
     );
