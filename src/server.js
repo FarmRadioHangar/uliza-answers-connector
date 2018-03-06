@@ -16,11 +16,63 @@ var SERVER_PORT = process.env.PORT || 8099;
 
 var router = express.Router();
 
+/*
+  {
+    id: "2219030",
+    schedule_type: "1",
+    send_to_all: "0",
+    has_sms: "0",
+    has_voice: "1",
+    message_id: null,
+    survey_id: null,
+    tree_id: "22881",
+    poll_id: null,
+    routine_days: null,
+    scheduled_date: "2018-03-06",
+    queued_on: "2018-03-06 07:03:52",
+    open_time: "12:00:00",
+    close_time: "01:00:00",
+    retry_attempts_short: "3",
+    retry_attempts_long: "1",
+    retry_delay_short: "1",
+    retry_delay_long: "60",
+    retry_count_short: "0",
+    retry_count_long: "0",
+    created_at: "2018-03-06 07:03:45",
+    updated_at: "2018-03-06 07:03:52",
+    webhook: {
+      url: "http://376c618b.ngrok.io/update",
+      method: "POST",
+      secret: ""
+    }
+  }
+*/
+function processCall(id) {
+  return viamo.get('outgoing_calls/' + id, [404])
+  .then(function(response) {
+    if (404 == response.all.statusCode) {
+      console.error(chalk.redBright('[bad_webhook_request] ') 
+        + 'Outgoing call not found' 
+      );
+      throw new Error('Invalid Viamo call ID.');
+    }
+    return response.body.data.outgoing_call;
+  })
+  .then(function(call) {
+    console.log(
+      chalk.cyan('[tree_id] ') + call.tree_id
+    );
+  });
+}
+
 router.post('/update', function(req, res) {
+  res.json();
   return Promise.resolve()
   .then(function() {
     api.assertBodyField(req, 'delivery_status');
+    api.assertBodyField(req, 'outgoing_call_id');
     var deliveryStatus = Number(req.body.delivery_status),
+        outgoingCallId = req.body.outgoing_call_id,
         humanReadable = viamo.deliveryStatus(deliveryStatus);
     console.log(
       chalk.cyan('[viamo_call_status_update] ') + JSON.stringify(req.body)
@@ -48,6 +100,10 @@ router.post('/update', function(req, res) {
         break;
       case 6:  /* Finished (Complete) */
       case 7:  /* Finished (Incomplete) */
+        return processCall(outgoingCallId)
+        .then(function(msg) {
+          //
+        });
         break;
       case 8:  /* Failed (No Viamo Credit) */
         break;
@@ -66,16 +122,9 @@ router.post('/update', function(req, res) {
       default: /* Invalid status code */
         break;
     }
-    res.json();
   })
   .catch(function(error) {
-    var response = { error: error.error };
-    if (error.message) {
-      response.message = error.message;
-    }
-    res.status(error.status || 500);
-    res.json(response);
-    console.error(chalk.redBright(JSON.stringify(response)));
+    console.error(chalk.redBright(error));
   });
 });
 
