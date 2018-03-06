@@ -3,6 +3,9 @@ var chalk = require('chalk');
 function buildRequest(yield) {
   return new Promise(function(resolve, reject) {
     var callback = function(error, response, body) {
+      if (error) {
+        throw new Error(error);
+      }
       if (isOk(response.statusCode)) {
         console.log(
           chalk.yellow('[response_code] ')
@@ -35,9 +38,6 @@ function isOk(code) {
 function validate(response, allowed) {
   var code = response.all.statusCode;
   if (!isOk(code) && -1 == allowed.indexOf(code)) {
-    console.error(chalk.redBright(
-      response.body.message || response.body
-    ));
     throw new Error('Server returned a non-200 response code.');
   }
 }
@@ -50,10 +50,10 @@ module.exports = {
     );
     return buildRequest(function(callback) {
       if ('object' === typeof(data)) {
-        /* Log request body for debugging purposes */
-        console.log(
-          chalk.magentaBright('[request_body] ') + JSON.stringify(data)
-        );
+        // /* Log request body for debugging purposes */
+        // console.log(
+        //   chalk.magentaBright('[request_body] ') + JSON.stringify(data)
+        // );
         client[method.toLowerCase()](uri, data, callback);
       } else {
         client[method.toLowerCase()](uri, callback);
