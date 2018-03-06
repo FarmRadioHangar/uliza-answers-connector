@@ -1,6 +1,13 @@
 require('dotenv').config();
-var bodyparser = require('body-parser'); var chalk      = require('chalk');
+
+var base64     = require('base64-stream');
+var bodyparser = require('body-parser');
+var chalk      = require('chalk');
 var express    = require('express');
+var https      = require('https');
+var lame       = require('lame');
+var ora        = require('ora');
+var spinners   = require('cli-spinners');
 var api        = require('./api');
 var viamo      = require('./viamo');
 var zammad     = require('./zammad');
@@ -14,7 +21,51 @@ var SERVER_PORT = process.env.PORT || 8099;
 
 var router = express.Router();
 
+function getBlock(interactions, id) {
+  for (var i = 0; i < interactions.length; ++i) {
+    if (interactions[i].block_id == id) {
+      return interactions[i];
+    }
+  }
+  return null;
+}
+
+function audioFilename(url) {
+  var a = url.split('/');
+  return a[a.length - 1].replace(/\.\w*$/, '');
+}
+
+function encodeAudio(url) {
+  return new Promise(function(resolve, reject) {
+    var encoder = new lame.Encoder({
+      channels: 2,                       // 2 channels (left and right)
+      bitDepth: 16,                      // 16-bit samples
+      sampleRate: 44100,                 // 44.100 Hz sample rate
+      bitRate: 128,
+      outSampleRate: 22050
+    });
+    var spinner = ora('Encoding audio')
+    spinner.spinner = spinners.arrow3;
+    spinner.start();
+    https.get(url, function(response) {
+      var output = new base64.Encode();
+      response.pipe(encoder);
+      encoder.pipe(output);
+      var buffer = '';
+      output.on('data', function(chunk) {
+        buffer += chunk.toString();
+      });
+      output.on('end', function() {
+        spinner.succeed();
+        resolve(buffer);
+      });
+    });
+  });
+}
+
 function processCall(id) {
+  var deliveryLogEntry, messageBlock;
+  var BLOCK_ID = 9761370;
   return viamo.get('outgoing_calls/' + id + '/delivery_logs', [404])
   .then(function(response) {
     if (404 == response.all.statusCode) {
@@ -29,26 +80,50 @@ function processCall(id) {
     if (!logs || 0 == logs.length) {
       throw new Error('Empty delivery log.');
     }
-    var log = logs[0];
+    deliveryLogEntry = logs[0];
     console.log(
-      chalk.cyan('[tree_id] ') + log.tree_id
+      chalk.cyan('[tree_id] ') + deliveryLogEntry.tree_id
     );
-    var url = 'trees/' + log.tree_id + '/delivery_logs/' + log.id;
-    return viamo.get(url);
+    return viamo.get(
+      'trees/' + deliveryLogEntry.tree_id + 
+      '/delivery_logs/' + deliveryLogEntry.id
+    );
   })
   .then(function(response) {
     return response.body.data;
   })
+  .then(function(data) { // = { interactions, delivery_log, tree }
+    messageBlock = getBlock(data.interactions, BLOCK_ID);
+    if (!messageBlock || !messageBlock.response || !messageBlock.response.open_audio_url) {
+      throw new Error('Couldn\'t find any audio response block matching ID ' + BLOCK_ID);
+    }
+    console.log(
+      chalk.cyan('[reponse_audio_url] ') + messageBlock.response.open_audio_url
+    );
+    return encodeAudio(messageBlock.response.open_audio_url);
+  })
   .then(function(data) {
-    var interactions = data.interactions
-        deliveryLog = data.delivery_log,
-        tree = data.tree;
-
-        // 9761370
-
-    // Get audio and send it to Zammad?
-
-    //console.log(interactions);
+    var obj = {
+      title: '[viamoOpenEndedAudio]',
+      group: 'Bart FM',
+      customer_id: 'guess:' + deliveryLogEntry.subscriber.phone + '@uliza.fm',
+      article: {
+        subject: 'n/a',
+        body: 'n/a',
+        attachments: [{
+          filename: audioFilename(messageBlock.response.open_audio_url),
+          data: data,
+          'mime-type': 'audio/mp3'
+        }]
+      }
+    };
+    console.log(
+      chalk.cyan('[zammad_post_ticket] ') + JSON.stringify(obj)
+    );
+    return zammad.post('tickets', obj);
+  })
+  .then(function(response) {
+    console.log(response.body);
   });
 }
 
