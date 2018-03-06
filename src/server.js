@@ -47,7 +47,7 @@ function encodeAudio(url) {
       bitRate: 128,
       outSampleRate: 22050
     });
-    var spinner = ora('Encoding audio')
+    var spinner = ora('Encoding audio');
     spinner.spinner = spinners.arrow3;
     spinner.start();
     https.get(url, function(response) {
