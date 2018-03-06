@@ -167,11 +167,7 @@ router.post('/update', function(req, res) {
         break;
       case 6:  /* Finished (Complete) */
       case 7:  /* Finished (Incomplete) */
-        return processCall(outgoingCallId)
-        .then(function() {
-          //
-        });
-        break;
+        return processCall(outgoingCallId);
       case 8:  /* Failed (No Viamo Credit) */
         break;
       case 9:  /* Failed (Network) */
