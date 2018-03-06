@@ -15,12 +15,9 @@ function buildRequest(yield) {
           chalk.redBright('[response_code] ')
           + chalk.white(response.statusCode)
         );
-        if (!error) {
-          console.log(
-            chalk.redBright('[response_body] ')
-            + JSON.stringify(response.body)
-          );
-        }
+        console.log(
+          chalk.redBright('[response_body] ') + JSON.stringify(body)
+        );
       }
       resolve({
         all: response,
