@@ -51,8 +51,8 @@ function processCall(id) {
   return viamo.get('outgoing_calls/' + id, [404])
   .then(function(response) {
     if (404 == response.all.statusCode) {
-      console.error(chalk.redBright('[bad_webhook_request] ') 
-        + 'Outgoing call not found' 
+      console.error(chalk.redBright('[bad_webhook_request] ')
+        + 'Outgoing call not found.'
       );
       throw new Error('Invalid Viamo call ID.');
     }
@@ -66,7 +66,7 @@ function processCall(id) {
 }
 
 router.post('/update', function(req, res) {
-  res.json();
+  res.json(); /* The response here doesn't really matter. */
   return Promise.resolve()
   .then(function() {
     api.assertBodyField(req, 'delivery_status');
@@ -101,7 +101,7 @@ router.post('/update', function(req, res) {
       case 6:  /* Finished (Complete) */
       case 7:  /* Finished (Incomplete) */
         return processCall(outgoingCallId)
-        .then(function(msg) {
+        .then(function() {
           //
         });
         break;
