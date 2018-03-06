@@ -19,6 +19,9 @@ app.use(bodyparser.json());
 
 var SERVER_PORT = process.env.PORT || 8099;
 
+/* @TODO Viamo audio response block ID */
+var AUDIO_BLOCK_ID = 9761370;
+
 var router = express.Router();
 
 function getBlock(interactions, id) {
@@ -32,7 +35,7 @@ function getBlock(interactions, id) {
 
 function audioFilename(url) {
   var a = url.split('/');
-  return a[a.length - 1].replace(/\.\w*$/, '');
+  return a[a.length - 1].replace(/\.\w*$/, '') + '.mp3';
 }
 
 function encodeAudio(url) {
@@ -65,7 +68,6 @@ function encodeAudio(url) {
 
 function processCall(id) {
   var deliveryLogEntry, messageBlock;
-  var BLOCK_ID = 9761370;
   return viamo.get('outgoing_calls/' + id + '/delivery_logs', [404])
   .then(function(response) {
     if (404 == response.all.statusCode) {
@@ -93,9 +95,9 @@ function processCall(id) {
     return response.body.data;
   })
   .then(function(data) { // = { interactions, delivery_log, tree }
-    messageBlock = getBlock(data.interactions, BLOCK_ID);
+    messageBlock = getBlock(data.interactions, AUDIO_BLOCK_ID);
     if (!messageBlock || !messageBlock.response || !messageBlock.response.open_audio_url) {
-      throw new Error('Couldn\'t find any audio response block matching ID ' + BLOCK_ID);
+      throw new Error('Couldn\'t find any audio response block matching ID ' + AUDIO_BLOCK_ID);
     }
     console.log(
       chalk.cyan('[reponse_audio_url] ') + messageBlock.response.open_audio_url
@@ -103,7 +105,7 @@ function processCall(id) {
     return encodeAudio(messageBlock.response.open_audio_url);
   })
   .then(function(data) {
-    var obj = {
+    var payload = {
       title: '[viamoOpenEndedAudio]',
       group: 'Bart FM',
       customer_id: 'guess:' + deliveryLogEntry.subscriber.phone + '@uliza.fm',
@@ -112,18 +114,21 @@ function processCall(id) {
         body: 'n/a',
         attachments: [{
           filename: audioFilename(messageBlock.response.open_audio_url),
-          data: data,
+          data: '###',
           'mime-type': 'audio/mp3'
         }]
       }
     };
     console.log(
-      chalk.cyan('[zammad_post_ticket] ') + JSON.stringify(obj)
+      chalk.cyan('[zammad_post_ticket] ') + JSON.stringify(payload)
     );
-    return zammad.post('tickets', obj);
+    payload.article.attachments[0].data = data;
+    return zammad.post('tickets', payload);
   })
   .then(function(response) {
-    console.log(response.body);
+    console.log(
+      chalk.cyan('[zammad_ticket_id] ') + response.body.id
+    );
   });
 }
 
@@ -190,24 +195,36 @@ router.post('/update', function(req, res) {
   });
 });
 
-viamo.get('languages') /* Basic connectivity test of arbitrary endpoint. */
+var spinner = ora('Connecting to Viamo and Zammad services.')
+spinner.start();
+
+var restoreConsole = (function() {
+  var cl = console.log;
+  console.log = function() {};
+  return function() {
+    spinner.succeed();
+    console.log = cl;
+  }
+})();
+
+viamo.get('languages') /* Viamo connectivity test */
 .catch(function(error) {
+  restoreConsole();
   console.error('Failed connecting to Viamo API on ' + VIAMO_API_URL + '.');
   process.exit(1);
 })
-.then(function() {
-  console.log('Viamo API connection OK.');
+.then(function() { /* Viamo API connection OK */
   return zammad.get('users/me');
 })
 .catch(function(error) {
+  restoreConsole();
   console.error('Failed connecting to Zammad API on ' + ZAMMAD_API_URL + '.');
   process.exit(1);
 })
-.then(function() {
-  console.log('Zammad API connection OK.');
-  /* Now we can run the server. */
+.then(function() { /* Zammad API connection OK: Now we can run the server */
   app.use(router);
   app.listen(SERVER_PORT);
+  restoreConsole();
   console.log(
     chalk.bold.yellow('Uliza Answers connector listening on port ' + SERVER_PORT)
   );
