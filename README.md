@@ -10,7 +10,7 @@ cd uliza-answers-connector
 
 This script will ask you for the API keys and write them to the `.env` file. Answer `y` to install the Node dependencies.
 
-Next, run `npm start` (or `yarn start`) to start the server.
+Next, run `npm start` (or `yarn start`) to launch the server.
 
 Start Ngrok with, e.g., `ngrok http 8099`.
 
