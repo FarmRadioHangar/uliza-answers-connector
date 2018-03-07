@@ -111,7 +111,7 @@ function processCall(id, audioBlockId) {
         body: 'n/a',
         attachments: [{
           filename: audioFilename(messageBlock.response.open_audio_url),
-          data: '###',
+          data: '###', // Added later to prevent from showing up in log output
           'mime-type': 'audio/mp3'
         }]
       }
