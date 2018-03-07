@@ -19,9 +19,6 @@ app.use(bodyparser.json());
 
 var SERVER_PORT = process.env.PORT || 8099;
 
-/* @TODO Viamo audio response block ID */
-var AUDIO_BLOCK_ID = 9761370;
-
 var router = express.Router();
 
 function getBlock(interactions, id) {
@@ -66,7 +63,7 @@ function encodeAudio(url) {
   });
 }
 
-function processCall(id) {
+function processCall(id, audioBlockId) {
   var deliveryLogEntry, messageBlock;
   return viamo.get('outgoing_calls/' + id + '/delivery_logs', [404])
   .then(function(response) {
@@ -95,9 +92,9 @@ function processCall(id) {
     return response.body.data;
   })
   .then(function(data) { // = { interactions, delivery_log, tree }
-    messageBlock = getBlock(data.interactions, AUDIO_BLOCK_ID);
+    messageBlock = getBlock(data.interactions, audioBlockId);
     if (!messageBlock || !messageBlock.response || !messageBlock.response.open_audio_url) {
-      throw new Error('Couldn\'t find any audio response block matching ID ' + AUDIO_BLOCK_ID);
+      throw new Error('Couldn\'t find any audio response block matching ID ' + audioBlockId);
     }
     console.log(
       chalk.cyan('[reponse_audio_url] ') + messageBlock.response.open_audio_url
@@ -132,6 +129,14 @@ function processCall(id) {
   });
 }
 
+function assertQueryParam(request, param) {
+  if (!request.query[param]) {
+    var msg = 'Query parameter ' + param + ' missing.';
+    console.error(chalk.redBright('[bad_webhook] ') + msg);
+    throw new Error('Webhook request parameters must include ' + param + '.');
+  }
+}
+
 function assertBodyField(request, field) {
   if (!request.body[field]) {
     var msg = 'Missing field ' + field + ' in webhook request body.';
@@ -146,6 +151,7 @@ router.post('/update', function(req, res) {
   .then(function() {
     assertBodyField(req, 'delivery_status');
     assertBodyField(req, 'outgoing_call_id');
+    assertQueryParam(req, 'audio_block_id');
     var deliveryStatus = Number(req.body.delivery_status),
         outgoingCallId = req.body.outgoing_call_id,
         humanReadable  = viamo.deliveryStatus(deliveryStatus);
@@ -175,7 +181,7 @@ router.post('/update', function(req, res) {
         break;
       case 6:  /* Finished (Complete) */
       case 7:  /* Finished (Incomplete) */
-        return processCall(outgoingCallId);
+        return processCall(outgoingCallId, req.query.audio_block_id);
       case 8:  /* Failed (No Viamo Credit) */
         break;
       case 9:  /* Failed (Network) */
