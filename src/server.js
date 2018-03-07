@@ -218,15 +218,15 @@ spinner.start();
 var restoreConsole = (function() {
   var cl = console.log;
   console.log = function() {};
-  return function() {
-    spinner.succeed();
+  return function(success) {
+    success ? spinner.succeed() : spinner.stop;
     console.log = cl;
   }
 })();
 
 viamo.get('languages') /* Viamo connectivity test */
 .catch(function(error) {
-  restoreConsole();
+  restoreConsole(false);
   console.error('Failed connecting to Viamo API.');
   process.exit(1);
 })
@@ -234,12 +234,12 @@ viamo.get('languages') /* Viamo connectivity test */
   return zammad.get('users/me');
 })
 .catch(function(error) {
-  restoreConsole();
+  restoreConsole(false);
   console.error('Failed connecting to Zammad API.');
   process.exit(1);
 })
 .then(function() { /* Zammad API connection OK: Now we can run the server */
-  restoreConsole();
+  restoreConsole(true);
   app.use(router);
   app.listen(SERVER_PORT);
   console.log(
@@ -247,7 +247,7 @@ viamo.get('languages') /* Viamo connectivity test */
   );
 })
 .catch(function(error) {
-  restoreConsole();
+  restoreConsole(false);
   console.error(error);
   process.exit(1);
 })
