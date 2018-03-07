@@ -1,6 +1,6 @@
 # uliza-answers-connector
 
-### Snow test
+### :snowman: Snow test :snowflake:
 
 ```
 git clone https://github.com/FarmRadioHangar/uliza-answers-connector
