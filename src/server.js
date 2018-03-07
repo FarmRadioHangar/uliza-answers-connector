@@ -84,7 +84,7 @@ function processCall(id, audioBlockId) {
       chalk.cyan('[tree_id] ') + deliveryLogEntry.tree_id
     );
     return viamo.get(
-      'trees/' + deliveryLogEntry.tree_id + 
+      'trees/' + deliveryLogEntry.tree_id +
       '/delivery_logs/' + deliveryLogEntry.id
     );
   })
@@ -124,6 +124,9 @@ function processCall(id, audioBlockId) {
   })
   .then(function(response) {
     console.log(
+      chalk.yellow('[ticket_created] ') + 'Ticket created successfully'
+    );
+    console.log(
       chalk.cyan('[zammad_ticket_id] ') + response.body.id
     );
   });
@@ -146,7 +149,7 @@ function assertBodyField(request, field) {
 }
 
 router.post('/update', function(req, res) {
-  res.json(); /* The response here doesn't really matter. */
+  res.json(); /* The HTTP response here doesn't really matter. */
   return Promise.resolve()
   .then(function() {
     assertBodyField(req, 'delivery_status');
