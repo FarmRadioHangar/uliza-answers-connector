@@ -33,9 +33,9 @@ function getBlock(interactions, id) {
 function encodeAudio(url) {
   return new Promise(function(resolve, reject) {
     var encoder = new lame.Encoder({
-      channels: 2,                       // 2 channels (left and right)
-      bitDepth: 16,                      // 16-bit samples
-      sampleRate: 44100,                 // 44.100 Hz sample rate
+      channels: 1,
+      bitDepth: 16,
+      sampleRate: 8000,
       bitRate: 128,
       outSampleRate: 22050
     });
