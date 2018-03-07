@@ -235,9 +235,9 @@ viamo.get('languages') /* Viamo connectivity test */
   process.exit(1);
 })
 .then(function() { /* Zammad API connection OK: Now we can run the server */
+  restoreConsole();
   app.use(router);
   app.listen(SERVER_PORT);
-  restoreConsole();
   console.log(
     chalk.bold.yellow('Uliza Answers connector listening on port ' + SERVER_PORT)
   );
