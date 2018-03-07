@@ -44,9 +44,6 @@ function encodeAudio(url) {
       bitRate: 128,
       outSampleRate: 22050
     });
-    var spinner = ora('Encoding audio');
-    spinner.spinner = spinners.arrow3;
-    spinner.start();
     https.get(url, function(response) {
       var output = new base64.Encode();
       response.pipe(encoder);
@@ -56,7 +53,6 @@ function encodeAudio(url) {
         buffer += chunk.toString();
       });
       output.on('end', function() {
-        spinner.succeed();
         resolve(buffer);
       });
     });
@@ -65,6 +61,8 @@ function encodeAudio(url) {
 
 function processCall(id, audioBlockId) {
   var deliveryLogEntry, messageBlock;
+  var spinner = ora('Encoding audio');
+  spinner.spinner = spinners.arrow3;
   return viamo.get('outgoing_calls/' + id + '/delivery_logs', [404])
   .then(function(response) {
     if (404 == response.all.statusCode) {
@@ -99,9 +97,11 @@ function processCall(id, audioBlockId) {
     console.log(
       chalk.cyan('[reponse_audio_url] ') + messageBlock.response.open_audio_url
     );
+    spinner.start();
     return encodeAudio(messageBlock.response.open_audio_url);
   })
   .then(function(data) {
+    spinner.succeed();
     var payload = {
       title: '[viamoOpenEndedAudio]',
       group: 'Bart FM',
@@ -129,6 +129,10 @@ function processCall(id, audioBlockId) {
     console.log(
       chalk.cyan('[zammad_ticket_id] ') + response.body.id
     );
+  })
+  .catch(function(error) {
+    spinner.stop();
+    throw error;
   });
 }
 
@@ -223,7 +227,7 @@ var restoreConsole = (function() {
 viamo.get('languages') /* Viamo connectivity test */
 .catch(function(error) {
   restoreConsole();
-  console.error('Failed connecting to Viamo API on ' + VIAMO_API_URL + '.');
+  console.error('Failed connecting to Viamo API.');
   process.exit(1);
 })
 .then(function() { /* Viamo API connection OK */
@@ -231,7 +235,7 @@ viamo.get('languages') /* Viamo connectivity test */
 })
 .catch(function(error) {
   restoreConsole();
-  console.error('Failed connecting to Zammad API on ' + ZAMMAD_API_URL + '.');
+  console.error('Failed connecting to Zammad API.');
   process.exit(1);
 })
 .then(function() { /* Zammad API connection OK: Now we can run the server */
@@ -241,4 +245,9 @@ viamo.get('languages') /* Viamo connectivity test */
   console.log(
     chalk.bold.yellow('Uliza Answers connector listening on port ' + SERVER_PORT)
   );
-});
+})
+.catch(function(error) {
+  restoreConsole();
+  console.error(error);
+  process.exit(1);
+})
