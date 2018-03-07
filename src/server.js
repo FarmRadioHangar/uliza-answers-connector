@@ -132,7 +132,9 @@ function processCall(id, audioBlockId) {
     console.log(
       chalk.cyan('[zammad_ticket_id] ') + response.body.id
     );
-    console.log('https://answers.uliza.fm/#ticket/zoom/' + response.body.id);
+    console.log(
+      chalk.bold('https://answers.uliza.fm/#ticket/zoom/' + response.body.id)
+    );
   })
   .catch(function(error) {
     spinner.stop();
