@@ -20,4 +20,4 @@ Schedule the "Snow" test tree call using
 ./snow.sh
 ```
 
-The script will ask you for your phone number and a webhook url. Specify the Ngrok url without a trailing slash; e.g., `http://xxxxxxxx.ngrok.io`.
+The script will ask you for your phone number and a webhook URL. Specify the Ngrok URL without a trailing slash; e.g., `http://xxxxxxxx.ngrok.io`.
