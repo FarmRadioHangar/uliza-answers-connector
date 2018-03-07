@@ -157,18 +157,18 @@ router.post('/update', function(req, res) {
     assertQueryParam(req, 'audio_block_id');
     var deliveryStatus = Number(req.body.delivery_status),
         outgoingCallId = req.body.outgoing_call_id,
-        humanReadable  = viamo.deliveryStatus(deliveryStatus);
+        statusMessage  = viamo.deliveryStatus(deliveryStatus);
     console.log(
       chalk.cyan('[viamo_call_status_update] ') + JSON.stringify(req.body)
     );
     console.log(
       chalk.cyan('[delivery_status] ')
       + deliveryStatus + ': '
-      + humanReadable[0]
+      + statusMessage[0]
     );
-    if (humanReadable[1]) {
+    if (statusMessage[1]) {
       console.log(
-        chalk.bold(humanReadable[1])
+        chalk.bold(statusMessage[1])
       );
     }
     switch (deliveryStatus) {
