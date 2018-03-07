@@ -4,7 +4,7 @@ function buildRequest(yield) {
   return new Promise(function(resolve, reject) {
     var callback = function(error, response, body) {
       if (error) {
-        throw new Error(error);
+        return reject(error);
       }
       if (isOk(response.statusCode)) {
         console.log(
