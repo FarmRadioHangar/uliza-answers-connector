@@ -93,7 +93,7 @@ function processCall(id, audioBlockId) {
       throw new Error('Couldn\'t find any audio response block matching ID ' + audioBlockId);
     }
     console.log(
-      chalk.cyan('[reponse_audio_url] ') + messageBlock.response.open_audio_url
+      chalk.cyan('[response_audio_url] ') + messageBlock.response.open_audio_url
     );
     spinner.start();
     return encodeAudio(messageBlock.response.open_audio_url);
