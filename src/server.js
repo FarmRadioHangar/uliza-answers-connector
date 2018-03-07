@@ -89,8 +89,13 @@ function processCall(id, audioBlockId) {
   })
   .then(function(data) { // = { interactions, delivery_log, tree }
     messageBlock = getBlock(data.interactions, audioBlockId);
-    if (!messageBlock || !messageBlock.response || !messageBlock.response.open_audio_url) {
-      throw new Error('Couldn\'t find any audio response block matching ID ' + audioBlockId);
+    var valid = messageBlock 
+      && messageBlock.response 
+      && messageBlock.response.open_audio_url;
+    if (!valid) {
+      throw new Error(
+        'Couldn\'t find any audio response block matching ID ' + audioBlockId
+      );
     }
     console.log(
       chalk.cyan('[response_audio_url] ') + messageBlock.response.open_audio_url
