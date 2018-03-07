@@ -1,6 +1,9 @@
 {
   "name": "uliza-answers-connector",
   "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
   "dependencies": {
     "base64-stream": "^0.1.3",
     "body-parser": "^1.18.2",
