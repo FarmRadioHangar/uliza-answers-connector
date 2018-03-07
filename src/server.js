@@ -249,4 +249,4 @@ viamo.get('languages') /* Viamo connectivity test */
   restoreConsole(false);
   console.error(error);
   process.exit(1);
-})
+});
