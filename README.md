@@ -8,7 +8,7 @@ cd uliza-answers-connector
 ./setup.sh
 ```
 
-This script will ask you for the API keys and write them to the `.env` file. Answer `y` to install the Node dependencies.
+This script will ask you for the API keys and write them to the `.env` file. Answer <kbd>y</kbd> to install the Node dependencies.
 
 Next, run `npm start` (or `yarn start`) to launch the server.
 
