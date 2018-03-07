@@ -14,7 +14,7 @@ Next, run `npm start` (or `yarn start`) to launch the server.
 
 Start Ngrok with, e.g., `./ngrok http 8099` (from the directory where your Ngrok binary is located).
 
-Schedule the "Snow" test tree call using 
+Schedule the "Snow" test tree call using: 
 
 ```
 ./snow.sh
