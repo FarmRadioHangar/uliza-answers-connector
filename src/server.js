@@ -55,6 +55,9 @@ function encodeAudio(url) {
       output.on('end', function() {
         resolve(buffer);
       });
+      output.on('error', function(error) {
+        reject(error);
+      });
     });
   });
 }
