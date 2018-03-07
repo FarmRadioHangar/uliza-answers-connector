@@ -30,11 +30,6 @@ function getBlock(interactions, id) {
   return null;
 }
 
-function audioFilename(url) {
-  var a = url.split('/');
-  return a[a.length - 1].replace(/\.\w*$/, '') + '.mp3';
-}
-
 function encodeAudio(url) {
   return new Promise(function(resolve, reject) {
     var encoder = new lame.Encoder({
@@ -113,7 +108,7 @@ function processCall(id, audioBlockId) {
         subject: 'n/a',
         body: 'n/a',
         attachments: [{
-          filename: audioFilename(messageBlock.response.open_audio_url),
+          filename: messageBlock.response.open_audio_file + '.mp3',
           data: '###', // Added later to prevent from showing up in log output
           'mime-type': 'audio/mp3'
         }]
