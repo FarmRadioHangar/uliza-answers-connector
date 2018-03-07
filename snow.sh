@@ -1,6 +1,7 @@
 #!/bin/bash
 read -p 'Phone number to call: ' PHONE_NUMBER && \
 read -p 'Webkhook URL (e.g., "http://xxxxxxx.ngrok.io"): ' WEBHOOK_URL && \
+source ./.env
 curl \
   -XPOST \
   https://go.votomobile.org/api/v1/outgoing_calls/ \
