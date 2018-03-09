@@ -25,7 +25,7 @@ module.exports = {
   },
 
   getTickets: function() {
-    return db.all('SELECT * FROM tickets');
+    return db.all('SELECT * FROM tickets;');
   }
 
 };
