@@ -1,26 +1,30 @@
 var chalk = require('chalk');
 
-function buildRequest(yield) {
+function buildRequest(yield, silent) {
   return new Promise(function(resolve, reject) {
     var callback = function(error, response, body) {
       if (error) {
         return reject(error);
       }
       if (isOk(response.statusCode)) {
-        console.log(
-          chalk.yellow('[response_code] ')
-          + chalk.green('\u2714 ')
-          + chalk.white(response.statusCode)
-        );
+        if (!silent) {
+          console.log(
+            chalk.yellow('[response_code] ')
+            + chalk.green('\u2714 ')
+            + chalk.white(response.statusCode)
+          );
+        }
       } else {
         /* Log body if we get something else than a 2xx response. */
-        console.log(
-          chalk.redBright('[response_code] ')
-          + chalk.white(response.statusCode)
-        );
-        console.log(
-          chalk.redBright('[response_body] ') + JSON.stringify(body)
-        );
+        if (!silent) {
+          console.log(
+            chalk.redBright('[response_code] ')
+            + chalk.white(response.statusCode)
+          );
+          console.log(
+            chalk.redBright('[response_body] ') + JSON.stringify(body)
+          );
+        }
       }
       resolve({
         all: response,
@@ -44,10 +48,13 @@ function validate(response, allowed) {
 
 module.exports = {
 
-  makeRequest: function(client, uri, respCodes, method, data) {
-    console.log(
-      chalk.magentaBright.bold(method + ' ' + client.host + uri)
-    );
+  makeRequest: function(client, uri, options, method, data) {
+    options = options || {};
+    if (!options.silent) {
+      console.log(
+        chalk.magentaBright.bold(method + ' ' + client.host + uri)
+      );
+    }
     return buildRequest(function(callback) {
       if ('object' === typeof(data)) {
         // /* Log request body for debugging purposes */
@@ -58,9 +65,9 @@ module.exports = {
       } else {
         client[method.toLowerCase()](uri, callback);
       }
-    })
+    }, options.silent)
     .then(function(response) {
-      validate(response, respCodes || []);
+      validate(response, options.accept || []);
       return response;
     });
   }
