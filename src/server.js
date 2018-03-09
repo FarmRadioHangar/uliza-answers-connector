@@ -240,6 +240,7 @@ function registerRecentArticles(ticket) {
     var diff = articles.length - ticket.articles;
     if (diff > 0) {
       /* One or more articles have been added. */
+      db.updateArticlesCount(ticket.id, articles.length);
       var recent = articles.slice(-diff);
       console.log(
         chalk.yellow('[zammad_ticket_update_id] ') + ticket.zammad_id
@@ -248,7 +249,6 @@ function registerRecentArticles(ticket) {
         chalk.cyan('[zammad_ticket_article(s)_added] ')
         + JSON.stringify(recent)
       );
-      db.updateArticlesCount(ticket.id, articles.length);
     }
   });
 }
@@ -263,6 +263,14 @@ function pollZammad() {
         }
       })
     );
+  })
+  .then(function() {
+    setTimeout(function() {
+      pollZammad()
+      .catch(function(error) {
+        console.error(error);
+      });
+    }, 6000);
   });
 }
 
@@ -290,7 +298,7 @@ viamo.get('languages', {silent: true}) /* Viamo connectivity test */
   console.log(chalk.bold.yellow(
     'Uliza Answers connector listening on port ' + SERVER_PORT
   ));
-  setInterval(function() {
+  setTimeout(function() {
     pollZammad()
     .catch(function(error) {
       console.error(error);
