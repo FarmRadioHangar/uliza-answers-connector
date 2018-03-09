@@ -254,6 +254,15 @@ function registerRecentArticles(ticket) {
   });
 }
 
+function setPollTimeout() {
+  setTimeout(function() {
+    pollZammad()
+    .catch(function(error) {
+      console.error(error);
+    });
+  }, ZAMMAD_POLLING_INTERVAL);
+}
+
 function pollZammad() {
   return db.getTickets()
   .then(function(results) {
@@ -266,12 +275,7 @@ function pollZammad() {
     );
   })
   .then(function() {
-    setTimeout(function() {
-      pollZammad()
-      .catch(function(error) {
-        console.error(error);
-      });
-    }, ZAMMAD_POLLING_INTERVAL);
+    setPollTimeout();
   });
 }
 
@@ -299,12 +303,7 @@ viamo.get('languages', {silent: true}) /* Viamo connectivity test */
   console.log(chalk.bold.yellow(
     'Uliza Answers connector listening on port ' + SERVER_PORT
   ));
-  setTimeout(function() {
-    pollZammad()
-    .catch(function(error) {
-      console.error(error);
-    });
-  }, ZAMMAD_POLLING_INTERVAL);
+  setPollTimeout();
 })
 .catch(function(error) {
   spinner.fail();
