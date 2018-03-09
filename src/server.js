@@ -20,6 +20,7 @@ app.use(bodyparser.urlencoded({extended: true}));
 app.use(bodyparser.json());
 
 var SERVER_PORT = process.env.PORT || 8099;
+var ZAMMAD_POLLING_INTERVAL = process.env.ZAMMAD_POLLING_INTERVAL || 6000;
 
 var router = express.Router();
 
@@ -270,7 +271,7 @@ function pollZammad() {
       .catch(function(error) {
         console.error(error);
       });
-    }, 6000);
+    }, ZAMMAD_POLLING_INTERVAL);
   });
 }
 
@@ -303,7 +304,7 @@ viamo.get('languages', {silent: true}) /* Viamo connectivity test */
     .catch(function(error) {
       console.error(error);
     });
-  }, 6000);
+  }, ZAMMAD_POLLING_INTERVAL);
 })
 .catch(function(error) {
   spinner.fail();
