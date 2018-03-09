@@ -63,7 +63,9 @@ function processCall(id, audioBlockId) {
   var deliveryLogEntry, messageBlock;
   var spinner = ora('Encoding audio');
   spinner.spinner = spinners.arrow3;
-  return viamo.get('outgoing_calls/' + id + '/delivery_logs', [404])
+  return viamo.get('outgoing_calls/' + id + '/delivery_logs', {
+    accept: [404]
+  })
   .then(function(response) {
     if (404 == response.all.statusCode) {
       console.error(chalk.redBright('[bad_webhook_request] ')
@@ -229,17 +231,10 @@ router.post('/update', function(req, res) {
 var spinner = ora('Connecting to Viamo and Zammad services.')
 spinner.start();
 
-var restoreConsole = (function() {
-  var cl = console.log;
-  console.log = function() {};
-  return function(success) {
-    success ? spinner.succeed() : spinner.stop;
-    console.log = cl;
-  }
-})();
-
 function registerRecentArticles(ticket) {
-  return zammad.get('ticket_articles/by_ticket/' + ticket.zammad_id)
+  return zammad.get('ticket_articles/by_ticket/' + ticket.zammad_id, {
+    silent: true
+  })
   .then(function(response) {
     var articles = response.body;
     var diff = articles.length - ticket.articles;
@@ -261,38 +256,40 @@ function registerRecentArticles(ticket) {
 function pollZammad() {
   return db.getTickets()
   .then(function(results) {
-    return sequential(results.map(function(ticket) {
-      return function() {
-        return registerRecentArticles(ticket);
-      }
-    }));
+    return sequential(
+      results.map(function(ticket) {
+        return function() {
+          return registerRecentArticles(ticket);
+        }
+      })
+    );
   });
 }
 
-viamo.get('languages') /* Viamo connectivity test */
+viamo.get('languages', {silent: true}) /* Viamo connectivity test */
 .catch(function(error) {
-  restoreConsole(false);
+  spinner.fail();
   console.error('Failed connecting to Viamo API.');
   process.exit(1);
 })
-.then(function() { /* Viamo API connection OK */
-  return zammad.get('users/me');
+.then(function() { /* Viamo API connection OK. */
+  return zammad.get('users/me', {silent: true});
 })
 .catch(function(error) {
-  restoreConsole(false);
+  spinner.fail();
   console.error('Failed connecting to Zammad API.');
   process.exit(1);
 })
-.then(function() { /* Zammad API connection OK: Now we can run the server */
-  restoreConsole(true);
+.then(function() { /* Zammad API connection OK. */
+  spinner.succeed();
   return db.init();
 })
 .then(function() {
-  app.use(router);
+  app.use(router); /* Now we can run the server. */
   app.listen(SERVER_PORT);
-  console.log(
-    chalk.bold.yellow('Uliza Answers connector listening on port ' + SERVER_PORT)
-  );
+  console.log(chalk.bold.yellow(
+    'Uliza Answers connector listening on port ' + SERVER_PORT
+  ));
   setInterval(function() {
     pollZammad()
     .catch(function(error) {
@@ -301,7 +298,7 @@ viamo.get('languages') /* Viamo connectivity test */
   }, 6000);
 })
 .catch(function(error) {
-  restoreConsole(false);
+  spinner.fail();
   console.error(error);
   process.exit(1);
 });
