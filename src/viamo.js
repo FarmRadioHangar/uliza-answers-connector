@@ -11,20 +11,20 @@ viamo.headers['api_key'] = VIAMO_API_KEY;
 
 module.exports = {
 
-  get: function(uri, respCodes) {
-    return api.makeRequest(viamo, uri, respCodes, 'GET');
+  get: function(uri, options) {
+    return api.makeRequest(viamo, uri, options, 'GET');
   },
 
-  post: function(uri, data, respCodes) {
-    return api.makeRequest(viamo, uri, respCodes, 'POST', data);
+  post: function(uri, data, options) {
+    return api.makeRequest(viamo, uri, options, 'POST', data);
   },
 
-  put: function(uri, data, respCodes) {
-    return api.makeRequest(viamo, uri, respCodes, 'PUT', data);
+  put: function(uri, data, options) {
+    return api.makeRequest(viamo, uri, options, 'PUT', data);
   },
 
-  patch: function(uri, data, respCodes) {
-    return api.makeRequest(viamo, uri, respCodes, 'PATCH', data);
+  patch: function(uri, data, options) {
+    return api.makeRequest(viamo, uri, options, 'PATCH', data);
   },
 
   deliveryStatus: function(code) {

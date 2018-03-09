@@ -11,20 +11,20 @@ zammad.headers['Authorization'] = 'Token token=' + ZAMMAD_API_TOKEN;
 
 module.exports = {
 
-  get: function(uri, respCodes) {
-    return api.makeRequest(zammad, uri, respCodes, 'GET');
+  get: function(uri, options) {
+    return api.makeRequest(zammad, uri, options, 'GET');
   },
 
-  post: function(uri, data, respCodes) {
-    return api.makeRequest(zammad, uri, respCodes, 'POST', data);
+  post: function(uri, data, options) {
+    return api.makeRequest(zammad, uri, options, 'POST', data);
   },
 
-  put: function(uri, data, respCodes) {
-    return api.makeRequest(zammad, uri, respCodes, 'PUT', data);
+  put: function(uri, data, options) {
+    return api.makeRequest(zammad, uri, options, 'PUT', data);
   },
 
-  patch: function(uri, data, respCodes) {
-    return api.makeRequest(zammad, uri, respCodes, 'PATCH', data);
+  patch: function(uri, data, options) {
+    return api.makeRequest(zammad, uri, options, 'PATCH', data);
   }
 
 };
