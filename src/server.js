@@ -8,8 +8,8 @@ var https      = require('https');
 var lame       = require('lame');
 var ora        = require('ora');
 var spinners   = require('cli-spinners');
-var sqlite     = require('sqlite');
 var api        = require('./api');
+var db         = require('./db');
 var viamo      = require('./viamo');
 var zammad     = require('./zammad');
 
@@ -127,9 +127,15 @@ function processCall(id, audioBlockId) {
     return zammad.post('tickets', payload);
   })
   .then(function(response) {
+    db.createTicket(
+      response.body.id, 
+      deliveryLogEntry.subscriber.phone,
+      messageBlock.response.open_audio_file
+    );
     console.log(
       chalk.yellow('[ticket_created] ') + 'Ticket created successfully'
     );
+    console.log(JSON.stringify(response.body));
     console.log(
       chalk.cyan('[zammad_ticket_id] ') + response.body.id
     );
@@ -247,10 +253,7 @@ viamo.get('languages') /* Viamo connectivity test */
 })
 .then(function() { /* Zammad API connection OK: Now we can run the server */
   restoreConsole(true);
-  return sqlite.open('db.sqlite');
-})
-.then(function(db) {
-  return db.run('CREATE TABLE IF NOT EXISTS tickets (zammad_id INTEGER, created_at TEXT);')
+  return db.init();
 })
 .then(function() {
   app.use(router);
