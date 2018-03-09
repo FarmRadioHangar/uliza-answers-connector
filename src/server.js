@@ -7,6 +7,7 @@ var express    = require('express');
 var https      = require('https');
 var lame       = require('lame');
 var ora        = require('ora');
+var sequential = require('promise-sequential');
 var spinners   = require('cli-spinners');
 var api        = require('./api');
 var db         = require('./db');
@@ -237,29 +238,34 @@ var restoreConsole = (function() {
   }
 })();
 
+function registerRecentArticles(ticket) {
+  return zammad.get('ticket_articles/by_ticket/' + ticket.zammad_id)
+  .then(function(response) {
+    var articles = response.body;
+    var diff = articles.length - ticket.articles;
+    if (diff > 0) {
+      /* One or more articles have been added. */
+      var recent = articles.slice(-diff);
+      console.log(
+        chalk.yellow('[zammad_ticket_update_id] ') + ticket.zammad_id 
+      );
+      console.log(
+        chalk.cyan('[zammad_ticket_article(s)_added] ') 
+        + JSON.stringify(recent)
+      );
+      db.updateArticlesCount(ticket.id, articles.length);
+    }
+  });
+}
+
 function pollZammad() {
-  db.getTickets()
+  return db.getTickets()
   .then(function(results) {
-    results.forEach(function(ticket) {
-      var id = ticket.zammad_id;
-      zammad.get('ticket_articles/by_ticket/' + id)
-      .then(function(response) {
-        var articles = response.body;
-        var diff = articles.length - ticket.articles;
-        if (diff > 0) {
-          /* One or more articles have been added. */
-          var recent = articles.slice(-diff);
-          console.log(
-            chalk.yellow('[zammad_ticket_update_id] ') + id 
-          );
-          console.log(
-            chalk.cyan('[zammad_ticket_article(s)_added] ') 
-            + JSON.stringify(recent)
-          );
-          db.updateArticlesCount(ticket.id, articles.length);
-        }
-      });
-    });
+    return sequential(results.map(function(ticket) { 
+      return function() {
+        return registerRecentArticles(ticket);
+      }
+    }));
   });
 }
 
@@ -288,7 +294,10 @@ viamo.get('languages') /* Viamo connectivity test */
     chalk.bold.yellow('Uliza Answers connector listening on port ' + SERVER_PORT)
   );
   setInterval(function() {
-    pollZammad();
+    pollZammad()
+    .catch(function(error) {
+      console.error(error);
+    });
   }, 6000);
 })
 .catch(function(error) {
