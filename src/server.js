@@ -264,6 +264,7 @@ function setPollTimeout() {
 }
 
 function pollZammad() {
+  console.log('.');
   return db.getTickets()
   .then(function(results) {
     return sequential(
