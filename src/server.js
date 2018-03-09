@@ -128,7 +128,7 @@ function processCall(id, audioBlockId) {
       chalk.cyan('[zammad_post_ticket] ') + JSON.stringify(payload)
     );
     payload.article.attachments[0].data = data;
-    return zammad.post('tickets', payload);
+    return zammad.post('tickets', payload, {logRequestBody: false});
   })
   .then(function(response) {
     db.createTicket(
@@ -264,7 +264,6 @@ function setPollTimeout() {
 }
 
 function pollZammad() {
-  console.log('.');
   return db.getTickets()
   .then(function(results) {
     return sequential(

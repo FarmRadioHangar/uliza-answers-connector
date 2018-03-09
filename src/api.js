@@ -57,12 +57,12 @@ module.exports = {
     }
     return buildRequest(function(callback) {
       if ('object' === typeof(data)) {
-        // if (!options.silent) {
-        //   /* Log request body for debugging purposes */
-        //   console.log(
-        //     chalk.magentaBright('[request_body] ') + JSON.stringify(data)
-        //   );
-        // }
+        if (!options.silent && false !== options.logRequestBody) {
+          /* Log request body for debugging purposes */
+          console.log(
+            chalk.magentaBright('[request_body] ') + JSON.stringify(data)
+          );
+        }
         client[method.toLowerCase()](uri, data, callback);
       } else {
         client[method.toLowerCase()](uri, callback);
