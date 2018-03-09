@@ -13,6 +13,7 @@
     "express": "^4.16.2",
     "lame": "^1.2.4",
     "ora": "^2.0.0",
-    "request-json": "^0.6.3"
+    "request-json": "^0.6.3",
+    "sqlite": "^2.9.1"
   }
 }
