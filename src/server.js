@@ -91,8 +91,8 @@ function processCall(id, audioBlockId) {
   })
   .then(function(data) { // = { interactions, delivery_log, tree }
     messageBlock = getBlock(data.interactions, audioBlockId);
-    var valid = messageBlock 
-      && messageBlock.response 
+    var valid = messageBlock
+      && messageBlock.response
       && messageBlock.response.open_audio_url;
     if (!valid) {
       throw new Error(
@@ -129,7 +129,7 @@ function processCall(id, audioBlockId) {
   })
   .then(function(response) {
     db.createTicket(
-      response.body.id, 
+      response.body.id,
       deliveryLogEntry.subscriber.phone,
       messageBlock.response.open_audio_file
     );
@@ -247,10 +247,10 @@ function registerRecentArticles(ticket) {
       /* One or more articles have been added. */
       var recent = articles.slice(-diff);
       console.log(
-        chalk.yellow('[zammad_ticket_update_id] ') + ticket.zammad_id 
+        chalk.yellow('[zammad_ticket_update_id] ') + ticket.zammad_id
       );
       console.log(
-        chalk.cyan('[zammad_ticket_article(s)_added] ') 
+        chalk.cyan('[zammad_ticket_article(s)_added] ')
         + JSON.stringify(recent)
       );
       db.updateArticlesCount(ticket.id, articles.length);
@@ -261,7 +261,7 @@ function registerRecentArticles(ticket) {
 function pollZammad() {
   return db.getTickets()
   .then(function(results) {
-    return sequential(results.map(function(ticket) { 
+    return sequential(results.map(function(ticket) {
       return function() {
         return registerRecentArticles(ticket);
       }
