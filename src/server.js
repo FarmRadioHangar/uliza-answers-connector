@@ -8,6 +8,7 @@ var https      = require('https');
 var lame       = require('lame');
 var ora        = require('ora');
 var spinners   = require('cli-spinners');
+var sqlite     = require('sqlite');
 var api        = require('./api');
 var viamo      = require('./viamo');
 var zammad     = require('./zammad');
@@ -246,6 +247,12 @@ viamo.get('languages') /* Viamo connectivity test */
 })
 .then(function() { /* Zammad API connection OK: Now we can run the server */
   restoreConsole(true);
+  return sqlite.open('db.sqlite');
+})
+.then(function(db) {
+  return db.run('CREATE TABLE IF NOT EXISTS tickets (zammad_id INTEGER, created_at TEXT);')
+})
+.then(function() {
   app.use(router);
   app.listen(SERVER_PORT);
   console.log(
