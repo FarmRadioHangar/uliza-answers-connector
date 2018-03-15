@@ -86,16 +86,21 @@ app.get('/secret', function(req, res) {
   }
   request.get(options)
     .then(function(json) {
-      res.render('secret', {
-        response: json
+      res.render('response', {
+        response: JSON.stringify(json)
       });
     })
     .catch(function(err) {
       if ('RequestError' === err.name) {
-        return res.send('Something went wrong. Is Uliza Connector accessible on ' + ULIZA_ANSWERS_CONNECTOR_URL + '?');
+        return res.send('Something went wrong. Is Uliza Connector accessible at ' + ULIZA_ANSWERS_CONNECTOR_URL + '?');
       } else if (err.response) {
-        if (401 === err.response.statusCode) {
-          return res.render('unauthorized');
+        switch (err.response.statusCode) {
+          case 401:
+            return res.render('unauthorized');
+          case 404:
+            return res.render('response', {
+              response: '404 Not found.'
+            });
         }
       }
       res.send('Something went wrong.');
