@@ -1,0 +1,11 @@
+{
+  "name": "uliza-answers-connector-demo-client",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+  }
+}
