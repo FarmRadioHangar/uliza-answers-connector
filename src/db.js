@@ -12,9 +12,9 @@ module.exports = {
     });
   },
 
-  createTicket: function(zammadId, subscriber, audio) {
+  createTicket: function(zammadId, phone, audio) {
     return db.run(
-      'INSERT INTO tickets (zammad_id, subscriber_phone, audio, articles, created_at) VALUES (?, ?, ?, 1, DATETIME(\'now\'));', zammadId, subscriber, audio
+      'INSERT INTO tickets (zammad_id, subscriber_phone, audio, articles, created_at) VALUES (?, ?, ?, 1, DATETIME(\'now\'));', zammadId, phone, audio
     );
   },
 
