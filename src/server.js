@@ -5,6 +5,8 @@ var bodyparser = require('body-parser');
 var chalk      = require('chalk');
 var express    = require('express');
 var https      = require('https');
+var jwks       = require('jwks-rsa');
+var jwt        = require('express-jwt');
 var lame       = require('lame');
 var ora        = require('ora');
 var sequential = require('promise-sequential');
@@ -170,7 +172,18 @@ function assertBodyField(request, field) {
 }
 
 router.get('/users/me', function(req, res) {
-
+  jwt({
+    secret: jwks.expressJwtSecret({
+      cache: true,
+      rateLimit: true,
+      jwksRequestsPerMinute: 5,
+      jwksUri: 'https://farmradio.eu.auth0.com/.well-known/jwks.json'
+    }),
+    audience: 'http://localhost:8099',            // ???
+    issuer: 'https://farmradio.eu.auth0.com/',
+    algorithms: ['RS256']
+  });
+  console.log('check check');
 });
 
 router.post('/update', function(req, res) {
