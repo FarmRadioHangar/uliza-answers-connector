@@ -1,0 +1,13 @@
+extends layout
+
+block content
+  p You tried to access an API resource which requires authentication. The server responded with a
+    = ' '
+    code 401 Unauthorized
+    = ' ' 
+    | response.
+  a(href="/login")
+    button() Login
+  = ' ' 
+  a(href="/")
+    button() Back
