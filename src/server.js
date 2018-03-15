@@ -10,6 +10,7 @@ var jwt        = require('express-jwt');
 var lame       = require('lame');
 var ora        = require('ora');
 var sequential = require('promise-sequential');
+var request    = require('request');
 var spinners   = require('cli-spinners');
 var api        = require('./api');
 var db         = require('./db');
@@ -184,6 +185,20 @@ var checkToken = jwt({
 });
 
 router.get('/users/me', checkToken, function(req, res) {
+  var userId = req.user.sub.replace(/^auth0\|/, '');
+  console.log(userId);
+  //console.log(req.headers.authorization);
+
+  //request.get({
+  //  url: 'https://farmradio.eu.auth0.com/userinfo',
+  //  headers: {
+  //    'Accept': 'application/json',
+  //    'Content-Type': 'application/json',
+  //    Authorization: req.headers.authorization,
+  //  }
+  //}, function(error, response, body) {
+  //});
+
   res.json({
     hello: 'world'
   });
