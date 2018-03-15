@@ -186,22 +186,29 @@ var checkToken = jwt({
 
 router.get('/users/me', checkToken, function(req, res) {
   var userId = req.user.sub.replace(/^auth0\|/, '');
-  console.log(userId);
-  //console.log(req.headers.authorization);
-
-  //request.get({
-  //  url: 'https://farmradio.eu.auth0.com/userinfo',
-  //  headers: {
-  //    'Accept': 'application/json',
-  //    'Content-Type': 'application/json',
-  //    Authorization: req.headers.authorization,
-  //  }
-  //}, function(error, response, body) {
-  //});
-
-  res.json({
-    hello: 'world'
+  db.getUser(userId)
+  .then(function(results) {
+    res.json({
+      auth0_user_id: results.auth0_user_id,
+      zammad_token: results.zammad_token,
+      firebase_login: results.firebase_login,
+      sip_user: results.sip_user
+    });
   });
+
+  /*
+  request.get({
+    url: 'https://farmradio.eu.auth0.com/userinfo',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: req.headers.authorization,
+    }
+  }, function(error, response, body) {
+    // ...
+  });
+  */
+
 });
 
 router.post('/update', function(req, res) {
