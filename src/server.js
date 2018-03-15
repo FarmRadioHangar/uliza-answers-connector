@@ -184,7 +184,9 @@ var checkToken = jwt({
 });
 
 router.get('/users/me', checkToken, function(req, res) {
-  console.log('check check');
+  res.json({
+    hello: 'world'
+  });
 });
 
 router.post('/update', function(req, res) {
