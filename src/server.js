@@ -178,7 +178,7 @@ var checkToken = jwt({
     jwksRequestsPerMinute: 5,
     jwksUri: 'https://farmradio.eu.auth0.com/.well-known/jwks.json'
   }),
-  audience: 'http://localhost:8099',            // ???
+  audience: 'https://dev.farmradio.fm/api/',
   issuer: 'https://farmradio.eu.auth0.com/',
   algorithms: ['RS256']
 });
