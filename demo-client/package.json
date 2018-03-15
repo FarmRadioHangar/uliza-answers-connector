@@ -5,7 +5,18 @@
     "start": "node index.js"
   },
   "dependencies": {
+    "body-parser": "^1.18.2",
+    "connect-ensure-login": "^0.1.1",
+    "cookie-parser": "^1.4.3",
+    "debug": "^3.1.0",
+    "dotenv": "^5.0.1",
+    "express": "^4.16.3",
+    "express-session": "^1.15.6",
+    "passport": "^0.4.0",
+    "passport-auth0": "^0.6.1",
+    "pug": "^2.0.1",
+    "request": "^2.85.0",
+    "request-promise": "^4.2.2"
   },
-  "devDependencies": {
-  }
+  "devDependencies": {}
 }
