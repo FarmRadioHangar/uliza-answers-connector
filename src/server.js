@@ -169,6 +169,10 @@ function assertBodyField(request, field) {
   }
 }
 
+router.get('/users/me', function(req, res) {
+
+});
+
 router.post('/update', function(req, res) {
   res.json(); /* The HTTP response here doesn't really matter. */
   return Promise.resolve()
