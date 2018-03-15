@@ -49,7 +49,7 @@ function callback(addr) {
 }
 
 app.get('/login', function(req, res) {
-  res.render('login', { 
+  res.render('login', {
     env: {
       AUTH0_CLIENT_ID: process.env.AUTH0_CLIENT_ID,
       AUTH0_DOMAIN: process.env.AUTH0_DOMAIN,
@@ -67,10 +67,10 @@ app.get('/error', function(req, res) {
   res.send('There was an error.');
 });
 
-app.get('/callback', 
-  passport.authenticate('auth0', { 
+app.get('/callback',
+  passport.authenticate('auth0', {
     audience: 'https://dev.farmradio.fm/api/',
-    failureRedirect: '/error' 
+    failureRedirect: '/error'
   }), function(req, res) {
     res.redirect('/');
   }
@@ -97,7 +97,7 @@ app.get('/secret', function(req, res) {
         if (401 === err.response.statusCode) {
           return res.render('unauthorized');
         }
-      } 
+      }
       res.send('Something went wrong.');
       throw err;
     });
