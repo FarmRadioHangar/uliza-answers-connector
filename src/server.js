@@ -188,12 +188,16 @@ router.get('/users/me', checkToken, function(req, res) {
   var userId = req.user.sub.replace(/^auth0\|/, '');
   db.getUser(userId)
   .then(function(results) {
-    res.json({
-      auth0_user_id: results.auth0_user_id,
-      zammad_token: results.zammad_token,
-      firebase_login: results.firebase_login,
-      sip_user: results.sip_user
-    });
+    if (results) {
+      res.json({
+        auth0_user_id: results.auth0_user_id,
+        zammad_token: results.zammad_token,
+        firebase_login: results.firebase_login,
+        sip_user: results.sip_user
+      });
+    } else {
+      res.status(404).send('Not found');
+    }
   });
 
   /*
