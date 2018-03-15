@@ -12,6 +12,9 @@ module.exports = {
     })
     .then(function() {
       return db.run('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, auth0_user_id INTEGER, zammad_token TEXT, firebase_login TEXT, sip_user TEXT, created_at TEXT);')
+    })
+    .then(function() {
+      return db.run('CREATE INDEX IF NOT EXISTS auth0_user_ids ON users (auth0_user_id);')
     });
   },
 
@@ -29,6 +32,10 @@ module.exports = {
 
   getTickets: function() {
     return db.all('SELECT * FROM tickets;');
+  },
+
+  getUser: function(auth0Id) {
+    return db.get('SELECT * FROM users where auth0_user_id = ?;', auth0Id);
   },
 
   createUser: function(auth0Id, zammadToken, firebaseLogin, sipUser) {
