@@ -236,7 +236,7 @@ router.post('/update', function(req, res) {
 var spinner = ora('Connecting to Viamo and Zammad services.')
 spinner.start();
 
-function registerRecentArticles(ticket) {
+function watchTicketStatus(ticket) {
   return zammad.get('ticket_articles/by_ticket/' + ticket.zammad_id, {
     silent: true
   })
@@ -273,7 +273,7 @@ function pollZammad() {
     return sequential(
       results.map(function(ticket) {
         return function() {
-          return registerRecentArticles(ticket);
+          return watchTicketStatus(ticket);
         }
       })
     );
