@@ -171,18 +171,19 @@ function assertBodyField(request, field) {
   }
 }
 
-router.get('/users/me', function(req, res) {
-  jwt({
-    secret: jwks.expressJwtSecret({
-      cache: true,
-      rateLimit: true,
-      jwksRequestsPerMinute: 5,
-      jwksUri: 'https://farmradio.eu.auth0.com/.well-known/jwks.json'
-    }),
-    audience: 'http://localhost:8099',            // ???
-    issuer: 'https://farmradio.eu.auth0.com/',
-    algorithms: ['RS256']
-  });
+var checkToken = jwt({
+  secret: jwks.expressJwtSecret({
+    cache: true,
+    rateLimit: true,
+    jwksRequestsPerMinute: 5,
+    jwksUri: 'https://farmradio.eu.auth0.com/.well-known/jwks.json'
+  }),
+  audience: 'http://localhost:8099',            // ???
+  issuer: 'https://farmradio.eu.auth0.com/',
+  algorithms: ['RS256']
+});
+
+router.get('/users/me', checkToken, function(req, res) {
   console.log('check check');
 });
 
