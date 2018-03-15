@@ -1,0 +1,12 @@
+extends layout
+
+block content
+  unless loggedIn
+    a(href="/login")
+      button() Login
+  else
+    a(href="/logout")
+      button() Logout
+  = ' '
+  a(href="/secret")
+    button() Access /users/me
