@@ -30,3 +30,5 @@ Open the ticket in the browser and add an answer. Within a few seconds the serve
 [zammad_ticket_update_id] YOUR_TICKET_ID
 [zammad_ticket_article(s)_added] [ ARTICLE_INFO ]
 ```
+
+### `users/me` endpoint
