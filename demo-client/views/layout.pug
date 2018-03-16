@@ -6,6 +6,8 @@ html
   body
     h3 Instructions
     ol
+      li Create a user:
+        pre curl -XPOST #{process.env.ULIZA_ANSWERS_CONNECTOR_URL}/users/ -H 'Content-Type: application/json' -d '{"auth0_user_id": "&lt;YOUR_AUTH0_USER_ID&gt;","zammad_token": "xxxxx","firebase_login": "xxxxx","sip_user": "xxxxx"}'
       li Try the 'Access user credentials' button.
       li Press the login button and authenticate.
       li Try the button again.
