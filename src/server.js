@@ -184,6 +184,18 @@ var checkToken = jwt({
   algorithms: ['RS256']
 });
 
+router.post('/users', function(req, res) {
+  db.createUser(
+    req.body.auth0_user_id,
+    req.body.zammad_token,
+    req.body.firebase_login,
+    req.body.sip_user
+  )
+  .then(function(result) {
+    res.json();
+  });
+});
+
 router.get('/users/me', checkToken, function(req, res) {
   var userId = req.user.sub.replace(/^auth0\|/, '');
   db.getUser(userId)
