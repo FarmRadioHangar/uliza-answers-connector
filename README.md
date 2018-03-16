@@ -32,3 +32,18 @@ Open the ticket in the browser and add an answer. Within a few seconds the serve
 ```
 
 ### `users/me` endpoint
+
+Run `./setup.sh` from the project root, unless you already have a `.env` file with the Viamo key and Zammad token. 
+
+Run `npm install` (this even if you already have a copy of the repo, since the dependences probably have changed).
+
+Start the server with `npm start` and open a new terminal.
+
+```
+cd demo-client
+```
+
+Run the `./setup.sh` script in this directory as well.
+
+Finally, run the server for the demo app, using `npm start` and open `http://localhost:3001` in the browser. 
+
