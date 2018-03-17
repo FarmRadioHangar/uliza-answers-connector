@@ -1,13 +1,7 @@
 {
   "main": "app.js",
-  "scripts": {
-    "start": "serve"
-  },
   "dependencies": {
-    "auth0-js": "^9.3.3",
-    "react": "^16.2.0",
-    "react-dom": "^16.2.0",
-    "serve": "^6.5.3"
+    "auth0-js": "^9.3.3"
   },
   "devDependencies": {}
 }
