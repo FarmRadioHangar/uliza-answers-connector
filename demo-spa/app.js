@@ -1,109 +1,86 @@
 window.addEventListener('load', function() {
 
+  function namespaced(name) {
+    return 'farmradio_' + name;
+  }
+
+  function setSession(authResult) {
+    console.log(authResult);
+    // Set access token expiry time 
+    var expiresAt = JSON.stringify(
+      authResult.expiresIn * 1000 + new Date().getTime()
+    );
+    localStorage.setItem(namespaced('access_token'), authResult.accessToken);
+    localStorage.setItem(namespaced('id_token'), authResult.idToken);
+    localStorage.setItem(namespaced('expires_at'), expiresAt);
+    location.hash = '';
+  }
+
+  function logout() {
+    // Remove tokens and expiry time from localStorage
+    localStorage.removeItem(namespaced('access_token'));
+    localStorage.removeItem(namespaced('id_token'));
+    localStorage.removeItem(namespaced('expires_at'));
+    document.querySelector('#output').innerHTML = 'Logged out!';
+  }
+
+  function isAuthenticated() {
+    // Check whether the current time is past the access token's expiry time
+    var expiresAt = JSON.parse(localStorage.getItem(namespaced('expires_at')));
+    return new Date().getTime() < expiresAt;
+  }
+
   var webAuth = new auth0.WebAuth({
     domain: AUTH0_DOMAIN,
     clientID: AUTH0_CLIENT_ID,
     redirectUri: AUTH0_CALLBACK_URL,
-    audience: 'https://' + AUTH0_DOMAIN + '/userinfo',
+    audience: 'https://dev.farmradio.fm/api/',
     responseType: 'token id_token',
-    scope: 'openid',
-    leeway: 30
+    scope: 'openid profile',
+    leeway: 40
+  });
+
+  webAuth.parseHash(function(err, authResult) {
+    if (authResult && authResult.accessToken && authResult.idToken) {
+      setSession(authResult);
+    } else if (err) {
+      console.error(err);
+      alert(
+        'Error: ' + err.error + '. Check the console for further details.'
+      );
+    }
+  });
+
+  document.getElementById('btn-login').addEventListener('click', function() {
+    webAuth.authorize();
+  });
+
+  document.querySelector('#btn-logout').addEventListener('click', function() {
+    if (!isAuthenticated()) {
+      return alert('You are not logged in!');
+    }
+    logout();
+  });
+
+  document.querySelector('#btn-get-user').addEventListener('click', function() {
+    var token = localStorage.getItem(namespaced('access_token'));
+    //fetch('http://connector.uliza.fm/users/me')
+    fetch('http://localhost:8099/users/me', {
+      headers: {
+        'Authorization': 'Bearer ' + token
+      }
+    })
+    .then(function(response) {
+      if (401 == response.status) {
+        return {
+          error: 'The server returned a 401 Unauthorized response.'
+        };
+      }
+      return response.json();
+    })
+    .then(function(json) {
+      document.querySelector('#output').innerHTML = JSON.stringify(json);
+    });
   });
 
 });
-
-//window.addEventListener('load', function() {
-//  var content = document.querySelector('.content');
-//  var loadingSpinner = document.getElementById('loading');
-//  content.style.display = 'block';
-//  loadingSpinner.style.display = 'none';
-//
-//  var webAuth = new auth0.WebAuth({
-//    domain: AUTH0_DOMAIN,
-//    clientID: AUTH0_CLIENT_ID,
-//    redirectUri: AUTH0_CALLBACK_URL,
-//    audience: 'https://' + AUTH0_DOMAIN + '/userinfo',
-//    responseType: 'token id_token',
-//    scope: 'openid',
-//    leeway: 30
-//  });
-//
-//  var loginStatus = document.querySelector('.container h4');
-//  var loginView = document.getElementById('login-view');
-//  var homeView = document.getElementById('home-view');
-//
-//  // buttons and event listeners
-//  var homeViewBtn = document.getElementById('btn-home-view');
-//  var loginBtn = document.getElementById('btn-login');
-//  var logoutBtn = document.getElementById('btn-logout');
-//
-//  homeViewBtn.addEventListener('click', function() {
-//    homeView.style.display = 'inline-block';
-//    loginView.style.display = 'none';
-//  });
-//
-//  loginBtn.addEventListener('click', function(e) {
-//    e.preventDefault();
-//    webAuth.authorize();
-//  });
-//
-//  logoutBtn.addEventListener('click', logout);
-//
-//  function setSession(authResult) {
-//    // Set the time that the access token will expire at
-//    var expiresAt = JSON.stringify(
-//      authResult.expiresIn * 1000 + new Date().getTime()
-//    );
-//    localStorage.setItem('access_token', authResult.accessToken);
-//    localStorage.setItem('id_token', authResult.idToken);
-//    localStorage.setItem('expires_at', expiresAt);
-//  }
-//
-//  function logout() {
-//    // Remove tokens and expiry time from localStorage
-//    localStorage.removeItem('access_token');
-//    localStorage.removeItem('id_token');
-//    localStorage.removeItem('expires_at');
-//    displayButtons();
-//  }
-//
-//  function isAuthenticated() {
-//    // Check whether the current time is past the
-//    // access token's expiry time
-//    var expiresAt = JSON.parse(localStorage.getItem('expires_at'));
-//    return new Date().getTime() < expiresAt;
-//  }
-//
-//  function handleAuthentication() {
-//    webAuth.parseHash(function(err, authResult) {
-//      if (authResult && authResult.accessToken && authResult.idToken) {
-//        window.location.hash = '';
-//        setSession(authResult);
-//        loginBtn.style.display = 'none';
-//        homeView.style.display = 'inline-block';
-//      } else if (err) {
-//        homeView.style.display = 'inline-block';
-//        console.log(err);
-//        alert(
-//          'Error: ' + err.error + '. Check the console for further details.'
-//        );
-//      }
-//      displayButtons();
-//    });
-//  }
-//
-//  function displayButtons() {
-//    if (isAuthenticated()) {
-//      loginBtn.style.display = 'none';
-//      logoutBtn.style.display = 'inline-block';
-//      loginStatus.innerHTML = 'You are logged in!';
-//    } else {
-//      loginBtn.style.display = 'inline-block';
-//      logoutBtn.style.display = 'none';
-//      loginStatus.innerHTML =
-//        'You are not logged in! Please log in to continue.';
-//    }
-//  }
-//
-//  handleAuthentication();
-//});
