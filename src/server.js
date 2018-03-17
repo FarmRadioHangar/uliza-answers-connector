@@ -20,10 +20,10 @@ var zammad     = require('./zammad');
 
 var app = express();
 
+app.use(cors());
 app.use(bodyparser.urlencoded({extended: true}));
 app.use(bodyparser.json());
 app.use(express.static('demo-spa'));
-app.use(cors());
 
 var SERVER_PORT = process.env.PORT || 8099;
 var ZAMMAD_POLLING_INTERVAL = process.env.ZAMMAD_POLLING_INTERVAL || 6000;
