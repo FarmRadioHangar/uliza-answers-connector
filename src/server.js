@@ -3,6 +3,7 @@ require('dotenv').config();
 var base64     = require('base64-stream');
 var bodyparser = require('body-parser');
 var chalk      = require('chalk');
+var cors       = require('cors');
 var express    = require('express');
 var https      = require('https');
 var jwks       = require('jwks-rsa');
@@ -22,6 +23,7 @@ var app = express();
 app.use(bodyparser.urlencoded({extended: true}));
 app.use(bodyparser.json());
 app.use(express.static('demo-spa'));
+app.use(cors());
 
 var SERVER_PORT = process.env.PORT || 8099;
 var ZAMMAD_POLLING_INTERVAL = process.env.ZAMMAD_POLLING_INTERVAL || 6000;
