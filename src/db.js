@@ -40,7 +40,7 @@ module.exports = {
 
   createUser: function(auth0Id, zammadToken, firebaseLogin, sipUsername, sipPassword, sipHost) {
     return db.run(
-      'INSERT INTO users (auth0_user_id, zammad_token, firebase_login, sip_username, sip_password, sip_host, created_at) VALUES (?, ?, ?, ?, DATETIME(\'now\'));', auth0Id, zammadToken, firebaseLogin, sipUsername, sipPassword, sipHost
+      'INSERT INTO users (auth0_user_id, zammad_token, firebase_login, sip_username, sip_password, sip_host, created_at) VALUES (?, ?, ?, ?, ?, ?, DATETIME(\'now\'));', auth0Id, zammadToken, firebaseLogin, sipUsername, sipPassword, sipHost
     );
   }
 
