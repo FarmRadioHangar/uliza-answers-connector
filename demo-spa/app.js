@@ -64,8 +64,7 @@ window.addEventListener('load', function() {
 
   document.querySelector('#btn-get-user').addEventListener('click', function() {
     var token = localStorage.getItem(namespaced('access_token'));
-    //fetch('http://connector.uliza.fm/users/me')
-    fetch('http://localhost:8099/users/me', {
+    fetch('http://connector.uliza.fm/users/me', {
       headers: {
         'Authorization': 'Bearer ' + token
       }
