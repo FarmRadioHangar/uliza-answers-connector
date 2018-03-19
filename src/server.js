@@ -192,7 +192,9 @@ router.post('/users', function(req, res) {
     req.body.auth0_user_id,
     req.body.zammad_token,
     req.body.firebase_login,
-    req.body.sip_user
+    req.body.sip_username,
+    req.body.sip_password,
+    req.body.sip_host
   )
   .then(function(result) {
     res.json();
@@ -208,7 +210,9 @@ router.get('/users/me', checkToken, function(req, res) {
         auth0_user_id: results.auth0_user_id,
         zammad_token: results.zammad_token,
         firebase_login: results.firebase_login,
-        sip_user: results.sip_user
+        sip_username: results.sip_username,
+        sip_password: results.sip_password,
+        sip_host: results.sip_host
       });
     } else {
       res.status(404).send('Not found');
