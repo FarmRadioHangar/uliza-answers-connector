@@ -198,6 +198,10 @@ router.post('/users', function(req, res) {
   )
   .then(function(result) {
     res.json();
+  })
+  .catch(function(error) {
+    console.error(chalk.redBright(error));
+    res.sendStatus(500);
   });
 });
 
