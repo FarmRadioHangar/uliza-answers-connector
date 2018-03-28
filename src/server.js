@@ -307,7 +307,7 @@ function watchTicketStatus(ticket) {
   })
   .then(function(response) {
     var articles = response.body;
-    var diff = articles.length - ticket.articles;
+    var diff = articles.length - ticket.articles_count;
     if (diff > 0) {
       /* One or more articles have been added. */
       db.updateArticlesCount(ticket.id, articles.length);

@@ -8,7 +8,7 @@ module.exports = {
     return sqlite.open('db.sqlite')
     .then(function(connection) {
       db = connection;
-      return db.run('CREATE TABLE IF NOT EXISTS tickets (id INTEGER PRIMARY KEY, zammad_id INTEGER, subscriber_phone TEXT, audio TEXT, articles INTEGER, created_at TEXT);')
+      return db.run('CREATE TABLE IF NOT EXISTS tickets (id INTEGER PRIMARY KEY, zammad_id INTEGER, subscriber_phone TEXT, audio TEXT, articles_count INTEGER, state_id INTEGER, created_at TEXT);')
     })
     .then(function() {
       return db.run('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, auth0_user_id INTEGER, zammad_token TEXT, firebase_login TEXT, sip_username TEXT, sip_password TEXT, sip_host TEXT, created_at TEXT);')
@@ -20,13 +20,13 @@ module.exports = {
 
   createTicket: function(zammadId, phone, audio) {
     return db.run(
-      'INSERT INTO tickets (zammad_id, subscriber_phone, audio, articles, created_at) VALUES (?, ?, ?, 1, DATETIME(\'now\'));', zammadId, phone, audio
+      'INSERT INTO tickets (zammad_id, subscriber_phone, audio, articles_count, created_at) VALUES (?, ?, ?, 1, DATETIME(\'now\'));', zammadId, phone, audio
     );
   },
 
   updateArticlesCount(id, count) {
     return db.run(
-      'UPDATE tickets SET articles = ? WHERE id = ?;', count, id
+      'UPDATE tickets SET articles_count = ? WHERE id = ?;', count, id
     );
   },
 
