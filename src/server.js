@@ -301,9 +301,25 @@ router.post('/update', function(req, res) {
 var spinner = ora('Connecting to Viamo and Zammad services.')
 spinner.start();
 
-function watchTicketStatus(ticket) {
-  return zammad.get('ticket_articles/by_ticket/' + ticket.zammad_id, {
+function monitorTicket(ticket, states) {
+  return zammad.get('tickets/' + ticket.zammad_id, {
     silent: true
+  })
+  .then(function(response) {
+    var zammadTicket = response.body;
+    if (ticket.state_id != zammadTicket.state_id) {
+      /* Ticket state has changed. Was the ticket closed? */
+      if ('closed' === states[zammadTicket.state_id].name) {
+        console.log(
+          chalk.yellow('[zammad_ticket_closed] ') + ticket.zammad_id
+        );
+        /* TODO: Create Viamo message and schedule call. */
+      }
+      db.updateTicketState(ticket.id, zammadTicket.state_id);
+    }
+    return zammad.get('ticket_articles/by_ticket/' + ticket.zammad_id, {
+      silent: true
+    });
   })
   .then(function(response) {
     var articles = response.body;
@@ -313,7 +329,7 @@ function watchTicketStatus(ticket) {
       db.updateArticlesCount(ticket.id, articles.length);
       var recent = articles.slice(-diff);
       console.log(
-        chalk.yellow('[zammad_ticket_update_id] ') + ticket.zammad_id
+        chalk.yellow('[zammad_ticket_articles_count_changed] ') + ticket.zammad_id
       );
       console.log(
         chalk.cyan('[zammad_ticket_article(s)_added] ')
@@ -333,12 +349,21 @@ function setPollTimeout() {
 }
 
 function pollZammad() {
-  return db.getTickets()
+  var states = {};
+  return zammad.get('ticket_states', {
+    silent: true
+  })
+  .then(function(results) {
+    results.body.forEach(function(state) {
+      states[state.id] = state;
+    });
+    return db.getTickets();
+  })
   .then(function(results) {
     return sequential(
       results.map(function(ticket) {
         return function() {
-          return watchTicketStatus(ticket);
+          return monitorTicket(ticket, states);
         }
       })
     );
