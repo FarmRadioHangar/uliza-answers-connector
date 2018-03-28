@@ -35,7 +35,7 @@ Open the ticket in the browser and add an answer. Within a few seconds the serve
 
 Run `./setup.sh` from the project root, unless you already have a `.env` file with the correct Viamo key and Zammad token. 
 
-Run `npm install` (do this even if you already have a copy of the repo, since the dependencies change from time to time).
+Run `npm install` (do this even if you already have a copy of the repo, since dependencies change from time to time).
 
 Start the server with `npm start` and open a new terminal.
 
