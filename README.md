@@ -44,4 +44,3 @@ Start the server with `npm start` and open a new terminal.
 Run the `./setup.sh` script in this directory as well. (This is a different script.)
 
 Finally, run the server for the demo app, using `npm start` and open `http://localhost:3001` in the browser. 
-
