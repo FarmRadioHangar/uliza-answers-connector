@@ -30,6 +30,12 @@ module.exports = {
     );
   },
 
+  updateTicketState(id, ticketState) {
+    return db.run(
+      'UPDATE tickets SET state_id = ? WHERE id = ?;', ticketState, id
+    );
+  },
+
   getTickets: function() {
     return db.all('SELECT * FROM tickets;');
   },
