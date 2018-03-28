@@ -313,7 +313,11 @@ function monitorTicket(ticket, states) {
         console.log(
           chalk.yellow('[zammad_ticket_closed] ') + ticket.zammad_id
         );
-        /* TODO: Create Viamo message and schedule call. */
+
+        /* Post Viamo audio. */
+
+        /* Create Viamo message and schedule call. */
+
       }
       db.updateTicketState(ticket.id, zammadTicket.state_id);
     }
