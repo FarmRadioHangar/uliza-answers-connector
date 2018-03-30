@@ -1,5 +1,6 @@
 .env
 node_modules
 npm-debug.log
+yarn-error.log
 *.sqlite
 tmp/*
