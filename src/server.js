@@ -327,7 +327,7 @@ function monitorTicket(ticket) {
         zammadTicket = assets.Ticket[ticket.zammad_id],
         articles     = assets.TicketArticle;
     /* Ticket state has changed. Was the ticket closed? */
-    if (ticket.state_id != zammadTicket.state_id && 4 == ) {
+    if (ticket.state_id != zammadTicket.state_id) {
       db.updateTicketState(ticket.id, zammadTicket.state_id);
       if (4 === zammadTicket.state_id) { // 4 == closed
         console.log(
@@ -363,7 +363,9 @@ function monitorTicket(ticket) {
                 fs.createReadStream(tmpfile.name)
                 .pipe(request.post({
                   url: viamoUrl,
+                  json: true
                 }, function(error, response, body) {
+                  console.log(typeof(body));
                   if (200 == response.statusCode) {
                     console.log(
                       chalk.yellow('[viamo_audio_created] ') + body.data
@@ -380,8 +382,7 @@ function monitorTicket(ticket) {
                     );
                   }
                 }));
-              })
-              .run();
+              }).run();
             }
           });
         });
