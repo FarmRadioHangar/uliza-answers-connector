@@ -367,12 +367,11 @@ function monitorTicket(ticket) {
                 }, function(error, response, body) {
                   console.log(typeof(body));
                   if (200 == response.statusCode) {
+                    var audioId = body.data;
                     console.log(
-                      chalk.yellow('[viamo_audio_created] ') + body.data
+                      chalk.yellow('[viamo_audio_created] ') + audioId
                     );
                     /* Create Viamo message and schedule call. */
-
-                    console.log(body);
 
                   } else {
                     throw new Error(
