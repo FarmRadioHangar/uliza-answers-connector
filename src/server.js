@@ -5,14 +5,17 @@ var bodyparser = require('body-parser');
 var chalk      = require('chalk');
 var cors       = require('cors');
 var express    = require('express');
+var ffmpeg     = require('fluent-ffmpeg');
+var fs         = require('fs');
 var https      = require('https');
 var jwks       = require('jwks-rsa');
 var jwt        = require('express-jwt');
 var lame       = require('lame');
 var ora        = require('ora');
-var sequential = require('promise-sequential');
 var request    = require('request');
+var sequential = require('promise-sequential');
 var spinners   = require('cli-spinners');
+var tmp        = require('tmp');
 var api        = require('./api');
 var db         = require('./db');
 var viamo      = require('./viamo');
@@ -27,6 +30,12 @@ app.use(express.static('demo-spa'));
 
 var SERVER_PORT = process.env.PORT || 8099;
 var ZAMMAD_POLLING_INTERVAL = process.env.ZAMMAD_POLLING_INTERVAL || 6000;
+var ZAMMAD_API_TOKEN = process.env.ZAMMAD_API_TOKEN;
+var ZAMMAD_API_URL = process.env.ZAMMAD_API_URL ||
+  'https://answers.uliza.fm/api/v1/';
+var VIAMO_API_KEY = process.env.VIAMO_API_KEY;
+var VIAMO_API_URL = process.env.VIAMO_API_URL ||
+  'https://go.votomobile.org/api/v1/';
 
 var router = express.Router();
 
@@ -125,7 +134,7 @@ function processCall(id, audioBlockId) {
         body: 'n/a',
         attachments: [{
           filename: messageBlock.response.open_audio_file + '.mp3',
-          data: '###', // Added later to prevent proliferation of log output
+          data: '###', // Added later to prevent log proliferation
           'mime-type': 'audio/mp3'
         }]
       }
@@ -222,7 +231,6 @@ router.get('/users/me', checkToken, function(req, res) {
       res.status(404).send('Not found');
     }
   });
-
   /*
   request.get({
     url: 'https://farmradio.eu.auth0.com/userinfo',
@@ -235,7 +243,6 @@ router.get('/users/me', checkToken, function(req, res) {
     // ...
   });
   */
-
 });
 
 router.post('/update', function(req, res) {
@@ -301,25 +308,84 @@ router.post('/update', function(req, res) {
 var spinner = ora('Connecting to Viamo and Zammad services.')
 spinner.start();
 
-function monitorTicket(ticket, states) {
-  return zammad.get('tickets/' + ticket.zammad_id, {
+function isAudio(file) {
+  if (!file) return false;
+  return /^.+\.(wav|mp3|mp4|ogg|ul|webm)$/.test(file);
+}
+
+function fileExtension(file) {
+  var pieces = file.split('.');
+  return pieces[pieces.length - 1];
+}
+
+function monitorTicket(ticket) {
+  return zammad.get('tickets/' + ticket.zammad_id + '/?all=true', {
     silent: true
   })
   .then(function(response) {
-    var zammadTicket = response.body;
-    if (ticket.state_id != zammadTicket.state_id) {
-      /* Ticket state has changed. Was the ticket closed? */
-      if ('closed' === states[zammadTicket.state_id].name) {
+    var assets       = response.body.assets,
+        zammadTicket = assets.Ticket[ticket.zammad_id],
+        articles     = assets.TicketArticle;
+    /* Ticket state has changed. Was the ticket closed? */
+    if (ticket.state_id != zammadTicket.state_id && 4 == ) {
+      db.updateTicketState(ticket.id, zammadTicket.state_id);
+      if (4 === zammadTicket.state_id) { // 4 == closed
         console.log(
           chalk.yellow('[zammad_ticket_closed] ') + ticket.zammad_id
         );
-
         /* Post Viamo audio. */
+        Object.keys(articles).map(function(key) {
+          return articles[key];
+        }).filter(function(article) {
+          return 10 == article.type_id; /* Is this all we need? */
+        }).map(function(article) {
+          article.attachments.forEach(function(attachment) {
+            if (isAudio(attachment.filename)) {
+              var zammadUrl = ZAMMAD_API_URL
+                + 'ticket_attachment/'
+                + ticket.zammad_id + '/'
+                + article.id + '/'
+                + attachment.id;
+              var viamoUrl = VIAMO_API_URL
+                + 'audio_files?description=' 
+                + encodeURIComponent(attachment.filename)
+                + '&file_extension=wav&api_key=' 
+                + VIAMO_API_KEY;
+              var tmpfile = tmp.fileSync();
+              ffmpeg().input(request.get({
+                url: zammadUrl,
+                encoding: null,
+                headers: {Authorization: 'Token token=' + ZAMMAD_API_TOKEN}
+              }))
+              .outputFormat('wav')
+              .output(fs.createWriteStream(tmpfile.name))
+              .on('end', function() {
+                fs.createReadStream(tmpfile.name)
+                .pipe(request.post({
+                  url: viamoUrl,
+                }, function(error, response, body) {
+                  if (200 == response.statusCode) {
+                    console.log(
+                      chalk.yellow('[viamo_audio_created] ') + body.data
+                    );
+                    /* Create Viamo message and schedule call. */
 
-        /* Create Viamo message and schedule call. */
+                    console.log(body);
 
+                  } else {
+                    throw new Error(
+                      'Viamo audio upload failed with response code ' 
+                      + response.statusCode 
+                      + '.'
+                    );
+                  }
+                }));
+              })
+              .run();
+            }
+          });
+        });
       }
-      db.updateTicketState(ticket.id, zammadTicket.state_id);
     }
     return zammad.get('ticket_articles/by_ticket/' + ticket.zammad_id, {
       silent: true
@@ -353,21 +419,12 @@ function setPollTimeout() {
 }
 
 function pollZammad() {
-  var states = {};
-  return zammad.get('ticket_states', {
-    silent: true
-  })
-  .then(function(results) {
-    results.body.forEach(function(state) {
-      states[state.id] = state;
-    });
-    return db.getTickets();
-  })
+  return db.getTickets()
   .then(function(results) {
     return sequential(
       results.map(function(ticket) {
         return function() {
-          return monitorTicket(ticket, states);
+          return monitorTicket(ticket);
         }
       })
     );
