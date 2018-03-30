@@ -402,8 +402,7 @@ function monitorTicket(ticket) {
         chalk.yellow('[zammad_ticket_articles_count_changed] ') + ticket.zammad_id
       );
       console.log(
-        chalk.cyan('[zammad_ticket_article(s)_added] ')
-        + JSON.stringify(recent)
+        chalk.cyan('[zammad_ticket_article(s)_added] ') + JSON.stringify(recent)
       );
     }
   });
