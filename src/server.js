@@ -326,7 +326,7 @@ function monitorTicket(ticket) {
     var assets       = response.body.assets,
         zammadTicket = assets.Ticket[ticket.zammad_id],
         articles     = assets.TicketArticle;
-    /* Ticket state has changed. Was the ticket closed? */
+    /* Ticket state has changed. Was it closed? */
     if (ticket.state_id != zammadTicket.state_id) {
       db.updateTicketState(ticket.id, zammadTicket.state_id);
       if (4 === zammadTicket.state_id) { // 4 == closed
@@ -346,11 +346,6 @@ function monitorTicket(ticket) {
                 + ticket.zammad_id + '/'
                 + article.id + '/'
                 + attachment.id;
-              var viamoUrl = VIAMO_API_URL
-                + 'audio_files?description=' 
-                + encodeURIComponent(attachment.filename)
-                + '&file_extension=wav&api_key=' 
-                + VIAMO_API_KEY;
               var tmpfile = tmp.fileSync();
               ffmpeg().input(request.get({
                 url: zammadUrl,
@@ -362,10 +357,14 @@ function monitorTicket(ticket) {
               .on('end', function() {
                 fs.createReadStream(tmpfile.name)
                 .pipe(request.post({
-                  url: viamoUrl,
+                  url: VIAMO_API_URL + 'audio_files',
+                  qs: {
+                    'description': attachment.filename,
+                    'file_extension': 'wav',
+                    'api_key': VIAMO_API_KEY
+                  },
                   json: true
                 }, function(error, response, body) {
-                  console.log(typeof(body));
                   if (200 == response.statusCode) {
                     var audioId = body.data;
                     console.log(
@@ -375,8 +374,8 @@ function monitorTicket(ticket) {
 
                   } else {
                     throw new Error(
-                      'Viamo audio upload failed with response code ' 
-                      + response.statusCode 
+                      'Viamo audio upload failed with response code '
+                      + response.statusCode
                       + '.'
                     );
                   }
