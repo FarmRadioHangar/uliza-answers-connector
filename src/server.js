@@ -318,6 +318,8 @@ function fileExtension(file) {
   return pieces[pieces.length - 1];
 }
 
+var TICKET_CLOSED_STATE_ID = 4;
+
 function monitorTicket(ticket) {
   return zammad.get('tickets/' + ticket.zammad_id + '/?all=true', {
     silent: true
@@ -329,7 +331,7 @@ function monitorTicket(ticket) {
     /* Ticket state has changed. Was it closed? */
     if (ticket.state_id != zammadTicket.state_id) {
       db.updateTicketState(ticket.id, zammadTicket.state_id);
-      if (4 === zammadTicket.state_id) { // 4 == closed
+      if (TICKET_CLOSED_STATE_ID === zammadTicket.state_id) { // 4 == closed
         console.log(
           chalk.yellow('[zammad_ticket_closed] ') + ticket.zammad_id
         );
@@ -342,10 +344,8 @@ function monitorTicket(ticket) {
           article.attachments.forEach(function(attachment) {
             if (isAudio(attachment.filename)) {
               var zammadUrl = ZAMMAD_API_URL
-                + 'ticket_attachment/'
-                + ticket.zammad_id + '/'
-                + article.id + '/'
-                + attachment.id;
+                + 'ticket_attachment/' + ticket.zammad_id
+                + '/' + article.id + '/' + attachment.id;
               var tmpfile = tmp.fileSync();
               ffmpeg().input(request.get({
                 url: zammadUrl,
