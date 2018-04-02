@@ -331,7 +331,7 @@ function monitorTicket(ticket) {
     /* Ticket state has changed. Was it closed? */
     if (ticket.state_id != zammadTicket.state_id) {
       db.updateTicketState(ticket.id, zammadTicket.state_id);
-      if (TICKET_CLOSED_STATE_ID === zammadTicket.state_id) { // 4 == closed
+      if (TICKET_CLOSED_STATE_ID === zammadTicket.state_id) {
         console.log(
           chalk.yellow('[zammad_ticket_closed] ') + ticket.zammad_id
         );
@@ -370,20 +370,42 @@ function monitorTicket(ticket) {
                     console.log(
                       chalk.yellow('[viamo_audio_created] ') + audioId
                     );
-                    /* Create Viamo survey */
-                    viamo.post('surveys', {
-                      survey_title: 'Uliza Answers Response'
+                    /* Create Viamo message */
+                    viamo.post('messages', {
+                      'audio_file[201194]': audioId, 
+                      'has_voice': 1,
+                      'title': 'Uliza Answers Response Message'
                     })
                     .then(function(response) {
-                      var surveyId = response.body.data;
+                      var messageId = response.body.data;
                       console.log(
-                        chalk.yellow('[viamo_survey_created] ') + surveyId
+                        chalk.yellow('[viamo_message_created] ') + messageId
                       );
-                      /* Attach audio to survey */
-                      return viamo.post('surveys/' + surveyId + '/questions', {
-
-                      })
+                      /* Create an outgoing call */
+                      viamo.post('outgoing_calls', {
+                        message_id: messageId,
+                        send_to_phones: '256784224203'
+                      });
+                    })
+                    .catch(function(error) {
+                      console.error(error);
                     });
+
+                    /* Create Viamo survey */
+                    //viamo.post('surveys', {
+                    //  survey_title: 'Uliza Answers Response'
+                    //})
+                    //.then(function(response) {
+                    //  var surveyId = response.body.data;
+                    //  console.log(
+                    //    chalk.yellow('[viamo_survey_created] ') + surveyId
+                    //  );
+                    //  /* Attach audio to survey */
+                    //  return viamo.post('surveys/' + surveyId + '/questions', {
+
+                    //  })
+                    //});
+
                   } else {
                     throw new Error(
                       'Viamo audio upload failed with response code '
