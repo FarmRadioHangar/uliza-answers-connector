@@ -372,7 +372,10 @@ function monitorTicket(ticket) {
                     );
                     /* Create Viamo message */
                     viamo.post('messages', {
-                      'audio_file[201194]': audioId,
+                      'audio_files[201194]': audioId,
+                      'audio_files[203161]': audioId,
+                      'audio_files[203162]': audioId,
+                      'audio_files[203163]': audioId,
                       'has_voice': 1,
                       'title': 'Uliza Answers Response Message'
                     })
