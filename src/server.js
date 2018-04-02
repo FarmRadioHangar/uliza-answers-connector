@@ -370,8 +370,20 @@ function monitorTicket(ticket) {
                     console.log(
                       chalk.yellow('[viamo_audio_created] ') + audioId
                     );
-                    /* Create Viamo message and schedule call. */
+                    /* Create Viamo survey */
+                    viamo.post('surveys', {
+                      survey_title: 'Uliza Answers Response'
+                    })
+                    .then(function(response) {
+                      var surveyId = response.body.data;
+                      console.log(
+                        chalk.yellow('[viamo_survey_created] ') + surveyId
+                      );
+                      /* Attach audio to survey */
+                      return viamo.post('surveys/' + surveyId + '/questions', {
 
+                      })
+                    });
                   } else {
                     throw new Error(
                       'Viamo audio upload failed with response code '
