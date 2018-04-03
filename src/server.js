@@ -361,6 +361,7 @@ function monitorTicket(ticket) {
                   qs: {
                     'description': attachment.filename,
                     'file_extension': 'wav',
+                    'language_id': 206069,
                     'api_key': VIAMO_API_KEY
                   },
                   json: true
@@ -371,12 +372,9 @@ function monitorTicket(ticket) {
                       chalk.yellow('[viamo_audio_created] ') + audioId
                     );
                     /* Create Viamo message */
-                    viamo.post('messages', {
-                      'audio_files[201194]': audioId,
-                      'audio_files[203161]': audioId,
-                      'audio_files[203162]': audioId,
-                      'audio_files[203163]': audioId,
+                    viamo.post('messages?audio_file[206069]=' + audioId, {
                       'has_voice': 1,
+                      'has_sms': 0,
                       'title': 'Uliza Answers Response Message'
                     })
                     .then(function(response) {
