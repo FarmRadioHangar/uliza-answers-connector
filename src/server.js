@@ -204,7 +204,12 @@ var checkToken = jwt({
 });
 
 router.post('/tickets', function(req, res) {
+  return Promise.resolve()
+  .then(function() {
+    assertBodyField(req, 'subscriber_phone');
+    assertBodyField(req, 'audio_url');
 
+  });
 });
 
 router.post('/users', function(req, res) {
