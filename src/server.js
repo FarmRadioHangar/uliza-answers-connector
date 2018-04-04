@@ -385,13 +385,12 @@ function monitorTicket(ticket) {
                       /* Create an outgoing call */
                       viamo.post('outgoing_calls', {
                         message_id: messageId,
-                        send_to_phones: '256784224203'
+                        send_to_phones: ticket.subscriber_phone
                       });
                     })
                     .catch(function(error) {
                       console.error(error);
                     });
-
                     /* Create Viamo survey */
                     //viamo.post('surveys', {
                     //  survey_title: 'Uliza Answers Response'
@@ -403,10 +402,8 @@ function monitorTicket(ticket) {
                     //  );
                     //  /* Attach audio to survey */
                     //  return viamo.post('surveys/' + surveyId + '/questions', {
-
                     //  })
                     //});
-
                   } else {
                     throw new Error(
                       'Viamo audio upload failed with response code '
