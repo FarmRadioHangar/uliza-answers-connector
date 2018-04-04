@@ -15,7 +15,6 @@
     "express-jwt": "^5.3.1",
     "fluent-ffmpeg": "^2.1.2",
     "jwks-rsa": "^1.2.1",
-    "lame": "^1.2.4",
     "ora": "^2.0.0",
     "promise-sequential": "^1.1.1",
     "request": "^2.85.0",
