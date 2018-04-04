@@ -196,6 +196,10 @@ var checkToken = jwt({
   algorithms: ['RS256']
 });
 
+router.post('/tickets', function(req, res) {
+
+});
+
 router.post('/users', function(req, res) {
   db.createUser(
     req.body.auth0_user_id,
