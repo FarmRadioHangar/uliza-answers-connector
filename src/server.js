@@ -75,6 +75,29 @@ function encodeAudio(url) {
   });
 }
 
+function createTicket(payload, phone, audioFile, audioMimeData) {
+  console.log(
+    chalk.cyan('[zammad_post_ticket] ') + JSON.stringify(payload)
+  );
+  payload.article.attachments[0].data = audioMimeData;
+  return zammad.post('tickets', payload, {
+    logRequestBody: false
+  })
+  .then(function(response) {
+    console.log(
+      chalk.yellow('[ticket_created] ') + 'Ticket created successfully'
+    );
+    console.log(JSON.stringify(response.body));
+    console.log(
+      chalk.cyan('[zammad_ticket_id] ') + response.body.id
+    );
+    console.log(
+      chalk.bold('https://answers.uliza.fm/#ticket/zoom/' + response.body.id)
+    ); 
+    return db.createTicket(response.body.id, phone, audioFile, audioMimeData);
+  });
+}
+
 function processCall(id, audioBlockId) {
   var deliveryLogEntry, messageBlock;
   var spinner = ora('Encoding audio');
@@ -139,27 +162,11 @@ function processCall(id, audioBlockId) {
         }]
       }
     };
-    console.log(
-      chalk.cyan('[zammad_post_ticket] ') + JSON.stringify(payload)
-    );
-    payload.article.attachments[0].data = data;
-    return zammad.post('tickets', payload, {logRequestBody: false});
-  })
-  .then(function(response) {
-    db.createTicket(
-      response.body.id,
-      deliveryLogEntry.subscriber.phone,
-      messageBlock.response.open_audio_file
-    );
-    console.log(
-      chalk.yellow('[ticket_created] ') + 'Ticket created successfully'
-    );
-    console.log(JSON.stringify(response.body));
-    console.log(
-      chalk.cyan('[zammad_ticket_id] ') + response.body.id
-    );
-    console.log(
-      chalk.bold('https://answers.uliza.fm/#ticket/zoom/' + response.body.id)
+    return createTicket(
+      payload, 
+      deliveryLogEntry.subscriber.phone, 
+      messageBlock.response.open_audio_file, 
+      data
     );
   })
   .catch(function(error) {
