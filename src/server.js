@@ -208,7 +208,12 @@ router.post('/tickets', function(req, res) {
   .then(function() {
     assertBodyField(req, 'subscriber_phone');
     assertBodyField(req, 'audio_url');
-
+    var phone = req.body.subscriber_phone,
+        audioUrl = req.body.audio_url,
+        subject = req.body.subject || 'n/a',
+        body = req.body.body || 'n/a',
+        title = req.body.title || '[ulizaQuestion]',
+        group = req.body.group || 'Bart FM';
   });
 });
 
