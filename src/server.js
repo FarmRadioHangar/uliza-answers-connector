@@ -204,16 +204,37 @@ var checkToken = jwt({
 });
 
 router.post('/tickets', function(req, res) {
+  var spinner = ora('Encoding audio');
+  spinner.spinner = spinners.arrow3;
   return Promise.resolve()
   .then(function() {
     assertBodyField(req, 'subscriber_phone');
     assertBodyField(req, 'audio_url');
-    var phone = req.body.subscriber_phone,
-        audioUrl = req.body.audio_url,
-        subject = req.body.subject || 'n/a',
-        body = req.body.body || 'n/a',
-        title = req.body.title || '[ulizaQuestion]',
-        group = req.body.group || 'Bart FM';
+    spinner.start();
+    return encodeAudio(req.body.audio_url);
+  })
+  .then(function(data) {
+    spinner.succeed();
+    var phone = req.body.subscriber_phone;
+    var payload = {
+      title: req.body.title || '[ulizaQuestion]',
+      group: req.body.group || 'Bart FM',
+      customer_id: 'guess:' + phone + '@uliza.fm',
+      article: {
+        subject: req.body.subject || 'n/a',
+        body: req.body.body || 'n/a',
+        attachments: [{
+          filename: 'uliza_audio.mp3',
+          data: '###',
+          'mime-type': 'audio/mp3'
+        }]
+      }
+    };
+    return createTicket(payload, phone, 'uliza_audio.mp3', data);
+  })
+  .catch(function(error) {
+    spinner.stop();
+    throw error;
   });
 });
 
