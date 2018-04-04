@@ -7,10 +7,8 @@ var cors       = require('cors');
 var express    = require('express');
 var ffmpeg     = require('fluent-ffmpeg');
 var fs         = require('fs');
-var https      = require('https');
 var jwks       = require('jwks-rsa');
 var jwt        = require('express-jwt');
-var lame       = require('lame');
 var ora        = require('ora');
 var request    = require('request');
 var sequential = require('promise-sequential');
@@ -50,27 +48,22 @@ function getBlock(interactions, id) {
 
 function encodeAudio(url) {
   return new Promise(function(resolve, reject) {
-    var encoder = new lame.Encoder({
-      channels: 1,
-      bitDepth: 16,
-      sampleRate: 8000,
-      bitRate: 128,
-      outSampleRate: 22050
+    var output = new base64.Encode();
+    ffmpeg().input(request.get({
+      url: url,
+      encoding: null,
+    }))
+    .outputFormat('mp3')
+    .pipe(output);
+    var buffer = '';
+    output.on('data', function(chunk) {
+      buffer += chunk.toString();
     });
-    https.get(url, function(response) {
-      var output = new base64.Encode();
-      response.pipe(encoder);
-      encoder.pipe(output);
-      var buffer = '';
-      output.on('data', function(chunk) {
-        buffer += chunk.toString();
-      });
-      output.on('end', function() {
-        resolve(buffer);
-      });
-      output.on('error', function(error) {
-        reject(error);
-      });
+    output.on('end', function() {
+      resolve(buffer);
+    });
+    output.on('error', function(error) {
+      reject(error);
     });
   });
 }
@@ -232,9 +225,13 @@ router.post('/tickets', function(req, res) {
     };
     return createTicket(payload, phone, 'uliza_audio.mp3', data);
   })
+  .then(function() {
+    res.json();
+  })
   .catch(function(error) {
     spinner.stop();
-    throw error;
+    console.error(chalk.redBright(error));
+    res.sendStatus(500);
   });
 });
 
