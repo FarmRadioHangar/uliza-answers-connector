@@ -1,11 +1,12 @@
 var sqlite = require('sqlite');
+var path = require('path');
 
 var db;
 
 module.exports = {
 
   init: function() {
-    return sqlite.open('db.sqlite')
+    return sqlite.open(path.join(__dirname, '../', 'db.sqlite'))
     .then(function(connection) {
       db = connection;
       return db.run('CREATE TABLE IF NOT EXISTS tickets (id INTEGER PRIMARY KEY, zammad_id INTEGER, subscriber_phone TEXT, audio TEXT, articles_count INTEGER, state_id INTEGER, created_at TEXT);')
