@@ -234,7 +234,8 @@ router.post('/tickets', function(req, res) {
     };
     return createTicket(payload, phone, 'uliza_audio.mp3', data);
   })
-  .then(function(ticket) {
+  .then(function(zammadResponse) {
+    var ticket = zammadResponse.body;
     res.json({
       id: ticket.id,
       url: 'https://answers.uliza.fm/#ticket/zoom/' + ticket.id
