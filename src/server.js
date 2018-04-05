@@ -1,23 +1,24 @@
 require('dotenv').config();
 
-var base64     = require('base64-stream');
-var bodyparser = require('body-parser');
-var chalk      = require('chalk');
-var cors       = require('cors');
-var express    = require('express');
-var ffmpeg     = require('fluent-ffmpeg');
-var fs         = require('fs');
-var jwks       = require('jwks-rsa');
-var jwt        = require('express-jwt');
-var ora        = require('ora');
-var request    = require('request');
-var sequential = require('promise-sequential');
-var spinners   = require('cli-spinners');
-var tmp        = require('tmp');
-var api        = require('./api');
-var db         = require('./db');
-var viamo      = require('./viamo');
-var zammad     = require('./zammad');
+var auth0Client = require('auth0').ManagementClient;
+var base64      = require('base64-stream');
+var bodyparser  = require('body-parser');
+var chalk       = require('chalk');
+var cors        = require('cors');
+var express     = require('express');
+var ffmpeg      = require('fluent-ffmpeg');
+var fs          = require('fs');
+var jwks        = require('jwks-rsa');
+var jwt         = require('express-jwt');
+var ora         = require('ora');
+var request     = require('request');
+var sequential  = require('promise-sequential');
+var spinners    = require('cli-spinners');
+var tmp         = require('tmp');
+var api         = require('./api');
+var db          = require('./db');
+var viamo       = require('./viamo');
+var zammad      = require('./zammad');
 
 var app = express();
 
@@ -25,6 +26,13 @@ app.use(cors());
 app.use(bodyparser.urlencoded({extended: true}));
 app.use(bodyparser.json());
 app.use(express.static('demo-spa'));
+
+var auth0 = new auth0Client({
+  domain: 'farmradio.eu.auth0.com',
+  clientId: process.env.AUTH0_CLIENT_ID,
+  clientSecret: process.env.AUTH0_CLIENT_SECRET,
+  scope: "read:users read:users_app_metadata",
+});
 
 var SERVER_PORT = process.env.PORT || 8099;
 var ZAMMAD_POLLING_INTERVAL = process.env.ZAMMAD_POLLING_INTERVAL || 6000;
@@ -255,21 +263,35 @@ router.post('/users', function(req, res) {
 
 router.get('/users/me', checkToken, function(req, res) {
   var userId = req.user.sub.replace(/^auth0\|/, '');
-  db.getUser(userId)
-  .then(function(results) {
-    if (results) {
-      res.json({
-        auth0_user_id: results.auth0_user_id,
-        zammad_token: results.zammad_token,
-        firebase_login: results.firebase_login,
-        sip_username: results.sip_username,
-        sip_password: results.sip_password,
-        sip_host: results.sip_host
-      });
+  auth0.getUser({id: req.user.sub})
+  .then(function(user) {
+    if (user.app_metadata && Object.keys(user.app_metadata).length) {
+      var data = user.app_metadata; 
+      data.auth0_user_id = userId;
+      console.log(
+        chalk.cyan('[auth0_app_metadata] ') + JSON.stringify(data)
+      );
+      res.json(data);
     } else {
-      res.status(404).send('Not found');
+      console.log(chalk.cyan('[no_auth0_metadata] '));
+      db.getUser(userId)
+      .then(function(results) {
+        if (results) {
+          res.json({
+            auth0_user_id: userId,
+            zammad_token: results.zammad_token,
+            firebase_login: results.firebase_login,
+            sip_username: results.sip_username,
+            sip_password: results.sip_password,
+            sip_host: results.sip_host
+          });
+        } else {
+          res.status(404).send('Not found');
+        }
+      });
     }
   });
+
   /*
   request.get({
     url: 'https://farmradio.eu.auth0.com/userinfo',
