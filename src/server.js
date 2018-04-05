@@ -95,7 +95,8 @@ function createTicket(payload, phone, audioFile, audioMimeData) {
     console.log(
       chalk.bold('https://answers.uliza.fm/#ticket/zoom/' + response.body.id)
     ); 
-    return db.createTicket(response.body.id, phone, audioFile, audioMimeData);
+    db.createTicket(response.body.id, phone, audioFile, audioMimeData);
+    return response;
   });
 }
 
@@ -233,8 +234,11 @@ router.post('/tickets', function(req, res) {
     };
     return createTicket(payload, phone, 'uliza_audio.mp3', data);
   })
-  .then(function() {
-    res.json();
+  .then(function(ticket) {
+    res.json({
+      id: ticket.id,
+      url: 'https://answers.uliza.fm/#ticket/zoom/' + ticket.id
+    });
   })
   .catch(function(error) {
     spinner.stop();
