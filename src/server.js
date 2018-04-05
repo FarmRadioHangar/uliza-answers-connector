@@ -248,24 +248,6 @@ router.post('/tickets', function(req, res) {
   });
 });
 
-router.post('/users', function(req, res) {
-  db.createUser(
-    req.body.auth0_user_id,
-    req.body.zammad_token,
-    req.body.firebase_login,
-    req.body.sip_username,
-    req.body.sip_password,
-    req.body.sip_host
-  )
-  .then(function(result) {
-    res.json();
-  })
-  .catch(function(error) {
-    console.error(chalk.redBright(error));
-    res.sendStatus(500);
-  });
-});
-
 router.get('/users/me', checkToken, function(req, res) {
   var userId = req.user.sub.replace(/^auth0\|/, '');
   auth0.getUser({id: req.user.sub})
