@@ -95,7 +95,7 @@ function createTicket(payload, phone, audioFile, audioMimeData) {
     console.log(
       chalk.bold('https://answers.uliza.fm/#ticket/zoom/' + response.body.id)
     ); 
-    db.createTicket(response.body.id, phone, audioFile, audioMimeData);
+    db.createTicket(response.body.id, phone, audioFile);
     return response;
   });
 }
