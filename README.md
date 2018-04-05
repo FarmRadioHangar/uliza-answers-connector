@@ -8,7 +8,7 @@ cd uliza-answers-connector
 ./setup.sh
 ```
 
-This script will ask you for the API keys and write them to the `.env` file. Answer <kbd>y</kbd> to install the Node dependencies.
+Enter the Zammad and Viamo API keys, as well as the Auth0 client credentials for this application, which can be obtained from [here](https://manage.auth0.com/#/clients/53nPL7h7V9KvqDqxodgokY345fC4rnop/settings). The script will write this information to the `.env` file. Answer <kbd>y</kbd> to install the Node dependencies.
 
 Next, run `npm start` (or `yarn start`) to launch the server.
 
@@ -20,7 +20,7 @@ Schedule the "Snow" test tree call using:
 ./snow.sh
 ```
 
-The script will ask you for your phone number and a webhook URL. Specify the Ngrok URL without a trailing slash; i.e., in the form `http://xxxxxxxx.ngrok.io`, where xxxxxxxx is the subdomain assigned to your tunnel.
+This script will ask you for your phone number and a webhook URL. Specify the Ngrok URL without a trailing slash; i.e., in the form `http://xxxxxxxx.ngrok.io`, where xxxxxxxx is the subdomain assigned to your tunnel.
 
 When you receive the call, answer the poll question and then choose to provide a question (option #2). Watch the output from the server process and make a note of any errors or warnings. On completion, you should see a link pointing to the newly created Zammad ticket.
 
