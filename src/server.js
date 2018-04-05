@@ -291,19 +291,6 @@ router.get('/users/me', checkToken, function(req, res) {
       });
     }
   });
-
-  /*
-  request.get({
-    url: 'https://farmradio.eu.auth0.com/userinfo',
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      Authorization: req.headers.authorization,
-    }
-  }, function(error, response, body) {
-    // ...
-  });
-  */
 });
 
 router.post('/update', function(req, res) {
