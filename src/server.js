@@ -1,11 +1,9 @@
 require('dotenv').config();
 
-var base64      = require('base64-stream');
 var bodyparser  = require('body-parser');
 var chalk       = require('chalk');
 var cors        = require('cors');
 var express     = require('express');
-var ffmpeg      = require('fluent-ffmpeg');
 var fs          = require('fs');
 var ora         = require('ora');
 var request     = require('request');
@@ -15,6 +13,7 @@ var tmp         = require('tmp');
 var api         = require('./api');
 var auth0       = require('./auth0');
 var db          = require('./db');
+var ffpmeg      = require('./ffmpeg');
 var viamo       = require('./viamo');
 var zammad      = require('./zammad');
 
@@ -43,28 +42,6 @@ function getBlock(interactions, id) {
     }
   }
   return null;
-}
-
-function encodeAudio(url) {
-  return new Promise(function(resolve, reject) {
-    var output = new base64.Encode();
-    ffmpeg().input(request.get({
-      url: url,
-      encoding: null,
-    }))
-    .outputFormat('mp3')
-    .pipe(output);
-    var buffer = '';
-    output.on('data', function(chunk) {
-      buffer += chunk.toString();
-    });
-    output.on('end', function() {
-      resolve(buffer);
-    });
-    output.on('error', function(error) {
-      reject(error);
-    });
-  });
 }
 
 function createTicket(payload, phone, audioFile, audioMimeData) {
@@ -137,7 +114,7 @@ function processCall(id, audioBlockId) {
       chalk.cyan('[response_audio_url] ') + messageBlock.response.open_audio_url
     );
     spinner.start();
-    return encodeAudio(messageBlock.response.open_audio_url);
+    return ffmpeg.encodeAudio(messageBlock.response.open_audio_url);
   })
   .then(function(data) {
     spinner.succeed();
@@ -192,7 +169,7 @@ router.post('/tickets', function(req, res) {
     assertBodyField(req, 'subscriber_phone');
     assertBodyField(req, 'audio_url');
     spinner.start();
-    return encodeAudio(req.body.audio_url);
+    return ffmpeg.encodeAudio(req.body.audio_url);
   })
   .then(function(data) {
     spinner.succeed();
