@@ -1,4 +1,49 @@
-controllers/
-models/
-tests/
-app.js
+- controllers/
+  - ticketsController.js
+
+    function postTicket(req, res) {
+      // validate request
+
+      var encoder = new AudioEncoder();
+      encoder
+        .encode(req.body.audio_url)
+        .then(data => {
+          return zammad.tickets.post(...);
+        })
+        .then(response => {
+          return db.tickets.insert(...);
+        })
+        .catch(err => {
+          //
+        });
+
+    }
+
+  - usersController.js
+
+    function getUsersMe(req, res) {
+    }
+
+  - webhookController.js
+
+    function viamoCallStatusUpdates(req, res) {
+    }
+
+- models/
+
+- tests/
+
+- utils/
+
+    AudioEncoder.js
+
+- app.js
+
+  // create express app and instantiate router
+
+- router.js
+
+  router.post('/tickets', ticketsController.postTickets);
+  router.get('/users/me', usersController.getUsersMe);
+  router.post('/update', webhookController.viamoCallStatusUpdates);
+
