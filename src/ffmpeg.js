@@ -3,6 +3,10 @@ var ffmpeg = require('fluent-ffmpeg');
 
 module.exports = {
 
+  command: function(options) {
+    return ffmpeg(options);
+  },
+
   encodeAudio: function(url) {
     return new Promise(function(resolve, reject) {
       var output = new base64.Encode();
