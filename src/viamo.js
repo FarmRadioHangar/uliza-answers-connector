@@ -90,10 +90,10 @@ module.exports = {
     });
   },
 
-  scheduleOutgoingCall: function(messageId) {
+  scheduleOutgoingCall: function(messageId, phoneNumber) {
     return module.exports.post('outgoing_calls', {
       message_id: messageId,
-      send_to_phones: ticket.subscriber_phone
+      send_to_phones: phoneNumber
     });
   }
 

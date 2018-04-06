@@ -356,14 +356,14 @@ function fileExtension(file) {
 var TICKET_CLOSED_STATE_ID = 4;
 var LANGUAGE_ID = 206069;
 
-function sendAnswer(audioId) {
+function sendAnswer(audioId, ticket) {
   viamo.createMessage(audioId, LANGUAGE_ID)
   .then(function(response) {
     var messageId = response.body.data;
     console.log(
       chalk.yellow('[viamo_message_created] ') + messageId
     );
-    viamo.scheduleOutgoingCall(messageId);
+    viamo.scheduleOutgoingCall(messageId, ticket.subscriber_phone);
   })
   .catch(function(error) {
     console.error(error);
@@ -425,7 +425,7 @@ function monitorTicket(ticket) {
                       console.log(
                         chalk.yellow('[viamo_audio_created] ') + body.data
                       );
-                      sendAnswer(body.data);
+                      sendAnswer(body.data, ticket);
                     } else {
                       throw new Error(
                         'Viamo audio upload failed with response code '
