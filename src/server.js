@@ -354,6 +354,34 @@ function fileExtension(file) {
 }
 
 var TICKET_CLOSED_STATE_ID = 4;
+var LANGUAGE_ID = 206069;
+
+function sendAnswer(audioId) {
+  viamo.createMessage(audioId, LANGUAGE_ID)
+  .then(function(response) {
+    var messageId = response.body.data;
+    console.log(
+      chalk.yellow('[viamo_message_created] ') + messageId
+    );
+    viamo.scheduleOutgoingCall(messageId);
+  })
+  .catch(function(error) {
+    console.error(error);
+  });
+  /* Create Viamo survey */
+  //viamo.post('surveys', {
+  //  survey_title: 'Uliza Answers Response'
+  //})
+  //.then(function(response) {
+  //  var surveyId = response.body.data;
+  //  console.log(
+  //    chalk.yellow('[viamo_survey_created] ') + surveyId
+  //  );
+  //  /* Attach audio to survey */
+  //  return viamo.post('surveys/' + surveyId + '/questions', {
+  //  })
+  //});
+}
 
 function monitorTicket(ticket) {
   return zammad.get('tickets/' + ticket.zammad_id + '/?all=true', {
@@ -391,62 +419,22 @@ function monitorTicket(ticket) {
               .output(fs.createWriteStream(tmpfile.name))
               .on('end', function() {
                 fs.createReadStream(tmpfile.name)
-                .pipe(request.post({
-                  url: VIAMO_API_URL + 'audio_files',
-                  qs: {
-                    'description': attachment.filename,
-                    'file_extension': 'wav',
-                    'language_id': 206069,
-                    'api_key': VIAMO_API_KEY
-                  },
-                  json: true
-                }, function(error, response, body) {
-                  if (200 == response.statusCode) {
-                    var audioId = body.data;
-                    console.log(
-                      chalk.yellow('[viamo_audio_created] ') + audioId
-                    );
-                    /* Create Viamo message */
-                    viamo.post('messages?audio_file[206069]=' + audioId, {
-                      'has_voice': 1,
-                      'has_sms': 0,
-                      'title': 'Uliza Answers Response Message'
-                    })
-                    .then(function(response) {
-                      var messageId = response.body.data;
+                .pipe(viamo.uploadAudio(attachment.filename, LANGUAGE_ID, 
+                  function (error, response, body) {
+                    if (200 == response.statusCode) {
                       console.log(
-                        chalk.yellow('[viamo_message_created] ') + messageId
+                        chalk.yellow('[viamo_audio_created] ') + body.data
                       );
-                      /* Create an outgoing call */
-                      viamo.post('outgoing_calls', {
-                        message_id: messageId,
-                        send_to_phones: ticket.subscriber_phone
-                      });
-                    })
-                    .catch(function(error) {
-                      console.error(error);
-                    });
-                    /* Create Viamo survey */
-                    //viamo.post('surveys', {
-                    //  survey_title: 'Uliza Answers Response'
-                    //})
-                    //.then(function(response) {
-                    //  var surveyId = response.body.data;
-                    //  console.log(
-                    //    chalk.yellow('[viamo_survey_created] ') + surveyId
-                    //  );
-                    //  /* Attach audio to survey */
-                    //  return viamo.post('surveys/' + surveyId + '/questions', {
-                    //  })
-                    //});
-                  } else {
-                    throw new Error(
-                      'Viamo audio upload failed with response code '
-                      + response.statusCode
-                      + '.'
-                    );
+                      sendAnswer(body.data);
+                    } else {
+                      throw new Error(
+                        'Viamo audio upload failed with response code '
+                        + response.statusCode
+                        + '.'
+                      );
+                    }
                   }
-                }));
+                ));
               }).run();
             }
           });
