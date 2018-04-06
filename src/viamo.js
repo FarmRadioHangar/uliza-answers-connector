@@ -1,5 +1,6 @@
+var request     = require('request');
 var requestJson = require('request-json');
-var api = require('./api');
+var api         = require('./api');
 
 var VIAMO_API_KEY = process.env.VIAMO_API_KEY;
 var VIAMO_API_URL = process.env.VIAMO_API_URL || 
@@ -65,6 +66,35 @@ module.exports = {
       case 14: return ['Failed (Error)', ''];
       default: return ['Invalid Status Code', ''];
     }
+  },
+
+  uploadAudio: function(description, languageId, callback) {
+    return request.post({
+      url: VIAMO_API_URL + 'audio_files',
+      qs: {
+        'description': description,
+        'file_extension': 'wav',
+        'language_id': languageId,
+        'api_key': VIAMO_API_KEY
+      },
+      json: true
+    }, callback);
+  },
+
+  createMessage: function(audioId, languageId) {
+    var url = 'messages?audio_file[' + languageId + ']=' + audioId;
+    return module.exports.post(url, {
+      'has_voice': 1,
+      'has_sms': 0,
+      'title': 'Uliza Answers Response Message'
+    });
+  },
+
+  scheduleOutgoingCall: function(messageId) {
+    return module.exports.post('outgoing_calls', {
+      message_id: messageId,
+      send_to_phones: ticket.subscriber_phone
+    });
   }
 
 };
