@@ -26,12 +26,6 @@ app.use(express.static('demo-spa'));
 
 var SERVER_PORT = process.env.PORT || 8099;
 var ZAMMAD_POLLING_INTERVAL = process.env.ZAMMAD_POLLING_INTERVAL || 6000;
-var ZAMMAD_API_TOKEN = process.env.ZAMMAD_API_TOKEN;
-var ZAMMAD_API_URL = process.env.ZAMMAD_API_URL ||
-  'https://answers.uliza.fm/api/v1/';
-var VIAMO_API_KEY = process.env.VIAMO_API_KEY;
-var VIAMO_API_URL = process.env.VIAMO_API_URL ||
-  'https://go.votomobile.org/api/v1/';
 
 var router = express.Router();
 
@@ -62,7 +56,7 @@ function createTicket(payload, phone, audioFile, audioMimeData) {
     );
     console.log(
       chalk.bold('https://answers.uliza.fm/#ticket/zoom/' + response.body.id)
-    ); 
+    );
     db.createTicket(response.body.id, phone, audioFile);
     return response;
   });
@@ -133,9 +127,9 @@ function processCall(id, audioBlockId) {
       }
     };
     return createTicket(
-      payload, 
-      deliveryLogEntry.subscriber.phone, 
-      messageBlock.response.open_audio_file, 
+      payload,
+      deliveryLogEntry.subscriber.phone,
+      messageBlock.response.open_audio_file,
       data
     );
   })
@@ -209,7 +203,7 @@ router.get('/users/me', auth0.checkToken, function(req, res) {
   auth0.managementClient.getUser({id: req.user.sub})
   .then(function(user) {
     if (user.app_metadata && Object.keys(user.app_metadata).length) {
-      var data = user.app_metadata; 
+      var data = user.app_metadata;
       data.auth0_user_id = userId;
       console.log(
         chalk.cyan('[auth0_app_metadata] ') + JSON.stringify(data)
@@ -362,20 +356,19 @@ function monitorTicket(ticket) {
         }).map(function(article) {
           article.attachments.forEach(function(attachment) {
             if (isAudio(attachment.filename)) {
-              var zammadUrl = ZAMMAD_API_URL
-                + 'ticket_attachment/' + ticket.zammad_id
-                + '/' + article.id + '/' + attachment.id;
               var tmpfile = tmp.fileSync();
-              ffmpeg().input(request.get({
-                url: zammadUrl,
-                encoding: null,
-                headers: {Authorization: 'Token token=' + ZAMMAD_API_TOKEN}
-              }))
+              ffmpeg.command().input(
+                zammad.getTicketAttachment(
+                  ticket.zammad_id,
+                  article.id,
+                  attachment.id
+                )
+              )
               .outputFormat('wav')
               .output(fs.createWriteStream(tmpfile.name))
               .on('end', function() {
                 fs.createReadStream(tmpfile.name)
-                .pipe(viamo.uploadAudio(attachment.filename, LANGUAGE_ID, 
+                .pipe(viamo.uploadAudio(attachment.filename, LANGUAGE_ID,
                   function (error, response, body) {
                     if (200 == response.statusCode) {
                       console.log(
