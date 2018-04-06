@@ -1,6 +1,5 @@
 require('dotenv').config();
 
-var auth0Client = require('auth0').ManagementClient;
 var base64      = require('base64-stream');
 var bodyparser  = require('body-parser');
 var chalk       = require('chalk');
@@ -8,14 +7,13 @@ var cors        = require('cors');
 var express     = require('express');
 var ffmpeg      = require('fluent-ffmpeg');
 var fs          = require('fs');
-var jwks        = require('jwks-rsa');
-var jwt         = require('express-jwt');
 var ora         = require('ora');
 var request     = require('request');
 var sequential  = require('promise-sequential');
 var spinners    = require('cli-spinners');
 var tmp         = require('tmp');
 var api         = require('./api');
+var auth0       = require('./auth0');
 var db          = require('./db');
 var viamo       = require('./viamo');
 var zammad      = require('./zammad');
@@ -26,13 +24,6 @@ app.use(cors());
 app.use(bodyparser.urlencoded({extended: true}));
 app.use(bodyparser.json());
 app.use(express.static('demo-spa'));
-
-var auth0 = new auth0Client({
-  domain: 'farmradio.eu.auth0.com',
-  clientId: process.env.AUTH0_CLIENT_ID,
-  clientSecret: process.env.AUTH0_CLIENT_SECRET,
-  scope: "read:users read:users_app_metadata",
-});
 
 var SERVER_PORT = process.env.PORT || 8099;
 var ZAMMAD_POLLING_INTERVAL = process.env.ZAMMAD_POLLING_INTERVAL || 6000;
@@ -193,18 +184,6 @@ function assertBodyField(request, field) {
   }
 }
 
-var checkToken = jwt({
-  secret: jwks.expressJwtSecret({
-    cache: true,
-    rateLimit: true,
-    jwksRequestsPerMinute: 5,
-    jwksUri: 'https://farmradio.eu.auth0.com/.well-known/jwks.json'
-  }),
-  audience: 'https://dev.farmradio.fm/api/',
-  issuer: 'https://farmradio.eu.auth0.com/',
-  algorithms: ['RS256']
-});
-
 router.post('/tickets', function(req, res) {
   var spinner = ora('Encoding audio');
   spinner.spinner = spinners.arrow3;
@@ -248,9 +227,9 @@ router.post('/tickets', function(req, res) {
   });
 });
 
-router.get('/users/me', checkToken, function(req, res) {
+router.get('/users/me', auth0.checkToken, function(req, res) {
   var userId = req.user.sub.replace(/^auth0\|/, '');
-  auth0.getUser({id: req.user.sub})
+  auth0.managementClient.getUser({id: req.user.sub})
   .then(function(user) {
     if (user.app_metadata && Object.keys(user.app_metadata).length) {
       var data = user.app_metadata; 
