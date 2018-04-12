@@ -31,6 +31,10 @@
 
 - models/
 
+  viamo.js
+  zammad.js
+  auth0.js
+
 - tests/
 
 - utils/
