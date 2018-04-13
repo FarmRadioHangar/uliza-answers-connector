@@ -480,18 +480,18 @@ function monitorTicket(ticket) {
                 }),
                 /* Create an intro */
                 viamo.post(
-                  'surveys/' + surveyId + '/introduction?audio_file[206069]=5acf9f09780491.28986102'
+                  'surveys/' + surveyId + '/introduction?audio_file[206069]=344879', {}
                 ),
                 /* Add conclusion */
                 viamo.post(
-                  'surveys/' + surveyId + '/conclusion?audio_file[206069]=5acf9f09780491.28986102'
+                  'surveys/' + surveyId + '/conclusion?audio_file[206069]=344879', {}
                 )
-              ])
-              .then(function() {
-                return viamo.post('outgoing_calls', {
-                  survey_id: surveyId,
-                  send_to_phones: ticket.subscriber_phone
-                });
+              ]);
+            })
+            .then(function() {
+              return viamo.post('outgoing_calls', {
+                survey_id: surveyId,
+                send_to_phones: ticket.subscriber_phone
               });
             })
             .then(function() {
@@ -550,11 +550,6 @@ function pollZammad() {
     setPollTimeout();
   });
 }
-
-return db.init()
-.then(function() {
-  setPollTimeout();
-});
 
 viamo.get('languages', {silent: true}) /* Viamo connectivity test */
 .catch(function(error) {
