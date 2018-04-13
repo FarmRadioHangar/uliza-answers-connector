@@ -76,7 +76,7 @@ function encodeAudio(url) {
   });
 }
 
-function createTicket(payload, phone, audioFile, audioMimeData) {
+function createTicket(payload, phone, audioUrl, audioMimeData) {
   console.log(
     chalk.cyan('[zammad_post_ticket] ') + JSON.stringify(payload)
   );
@@ -95,7 +95,7 @@ function createTicket(payload, phone, audioFile, audioMimeData) {
     console.log(
       chalk.bold('https://answers.uliza.fm/#ticket/zoom/' + response.body.id)
     ); 
-    db.createTicket(response.body.id, phone, audioFile);
+    db.createTicket(response.body.id, phone, audioUrl);
     return response;
   });
 }
@@ -232,7 +232,7 @@ router.post('/tickets', function(req, res) {
         }]
       }
     };
-    return createTicket(payload, phone, 'uliza_audio.mp3', data);
+    return createTicket(payload, phone, req.body.audio_url, data);
   })
   .then(function(zammadResponse) {
     var ticket = zammadResponse.body;
@@ -365,6 +365,38 @@ function fileExtension(file) {
   return pieces[pieces.length - 1];
 }
 
+function postViamoAudio(options, description) {
+  return new Promise(function(resolve, reject) {
+    var tmpfile = tmp.fileSync();
+    ffmpeg().input(request.get(options))
+    .outputFormat('wav')
+    .output(fs.createWriteStream(tmpfile.name))
+    .on('end', function() {
+      fs.createReadStream(tmpfile.name)
+      .pipe(request.post({
+        url: VIAMO_API_URL + 'audio_files',
+        qs: {
+          'description': description,
+          'file_extension': 'wav',
+          'language_id': 206069,
+          'api_key': VIAMO_API_KEY
+        },
+        json: true
+      }, function(error, response, body) {
+        if (200 == response.statusCode) {
+          resolve(body.data);
+        } else {
+          reject(
+            'Viamo audio upload failed with response code ' 
+            + response.statusCode 
+            + '.'
+          );
+        }
+      }));
+    }).run();
+  });
+}
+
 var TICKET_CLOSED_STATE_ID = 4;
 
 function monitorTicket(ticket) {
@@ -382,138 +414,97 @@ function monitorTicket(ticket) {
         console.log(
           chalk.yellow('[zammad_ticket_closed] ') + ticket.zammad_id
         );
-        /* Post Viamo audio. */
-
-        var audios = Object.keys(articles).map(function(key) {
-          return articles[key];
-        }).filter(function(article) {
-          return firstAudioAttachment(article);
-        }).filter(function(audio) {
-          return !!audio;
+        var audioFiles = Object.keys(articles).map(function(key) {
+          var article = articles[key];
+          return {
+            article: article,
+            attachment: firstAudioAttachment(article)
+          };
+        }).filter(function(item) {
+          return !!item.attachment;
         });
-
-        console.log(audios);
-
-        if (audios.length > 1) {
-
-          var question = audios[0];
-          var answer = audios[audios.length - 1];
-
-          console.log(zammadTicket);
-          console.log('-----------------------------------------------');
-          console.log(question);
-          console.log('-----------------------------------------------');
-          console.log(answer);
-
+        if (audioFiles.length > 1) {
+          var questionAudioId, answerAudioId, surveyId;
+          var item = audioFiles[audioFiles.length - 1];
+          var zammadUrl = ZAMMAD_API_URL
+            + 'ticket_attachment/' + ticket.zammad_id
+            + '/' + item.article.id + '/' + item.attachment.id;
+          return postViamoAudio({
+            url: zammadUrl,
+            encoding: null,
+            headers: {
+              Authorization: 'Token token=' + ZAMMAD_API_TOKEN
+            } 
+          }, item.attachment.filename)
+          .then(function(id) {
+            console.log(
+              chalk.yellow('[viamo_answer_audio_created] ') + id
+            );
+            answerAudioId = id;
+            console.log(ticket.audio);
+            return postViamoAudio({
+              url: ticket.audio,
+              encoding: null
+            }, 'question');
+          })
+          .then(function(id) {
+            console.log(
+              chalk.yellow('[viamo_question_audio_created] ') + id
+            );
+            questionAudioId = id;
+            /* Create Viamo survey */
+            viamo.post('surveys', {
+              survey_title: 'Uliza Answers Response'
+            })
+            .then(function(response) {
+              surveyId = response.body.data;
+              console.log(
+                chalk.yellow('[viamo_survey_created] ') + surveyId
+              );
+              /* Question */
+              return viamo.post('surveys/' + surveyId + '/questions' 
+                  + '?audio_file[206069]=' + questionAudioId
+                  + '&options[]=', {
+                response_type: 4,
+                question_title: 'Uliza Answers Question'
+              });
+            })
+            .then(function() {
+              return Promise.all([
+                /* Answer */
+                viamo.post('surveys/' + surveyId + '/questions'
+                    + '?audio_file[206069]=' + answerAudioId
+                    + '&options[]=', {
+                  response_type: 4,
+                  question_title: 'Uliza Answers Response'
+                }),
+                /* Create an intro */
+                viamo.post(
+                  'surveys/' + surveyId + '/introduction?audio_file[206069]=5acf9f09780491.28986102'
+                ),
+                /* Add conclusion */
+                viamo.post(
+                  'surveys/' + surveyId + '/conclusion?audio_file[206069]=5acf9f09780491.28986102'
+                )
+              ])
+              .then(function() {
+                return viamo.post('outgoing_calls', {
+                  survey_id: surveyId,
+                  send_to_phones: ticket.subscriber_phone
+                });
+              });
+            })
+            .then(function() {
+              console.log(
+                chalk.yellow('[outgoing_call_scheduled]')
+              );
+            });
+          });
         }
-
-
-        //Object.keys(articles).map(function(key) {
-        //  return articles[key];
-        //}).filter(function(article) {
-        //  return 10 == article.type_id; /* Is this all we need? */
-        //}).map(function(article) {
-        //  article.attachments.forEach(function(attachment) {
-        //    if (isAudio(attachment.filename)) {
-        //      var zammadUrl = ZAMMAD_API_URL
-        //        + 'ticket_attachment/' + ticket.zammad_id
-        //        + '/' + article.id + '/' + attachment.id;
-        //      var tmpfile = tmp.fileSync();
-        //      ffmpeg().input(request.get({
-        //        url: zammadUrl,
-        //        encoding: null,
-        //        headers: {Authorization: 'Token token=' + ZAMMAD_API_TOKEN}
-        //      }))
-        //      .outputFormat('wav')
-        //      .output(fs.createWriteStream(tmpfile.name))
-        //      .on('end', function() {
-        //        fs.createReadStream(tmpfile.name)
-        //        .pipe(request.post({
-        //          url: VIAMO_API_URL + 'audio_files',
-        //          qs: {
-        //            'description': attachment.filename,
-        //            'file_extension': 'wav',
-        //            'language_id': 206069,
-        //            'api_key': VIAMO_API_KEY
-        //          },
-        //          json: true
-        //        }, function(error, response, body) {
-        //          if (200 == response.statusCode) {
-        //            var audioId = body.data;
-        //            console.log(
-        //              chalk.yellow('[viamo_audio_created] ') + audioId
-        //            );
-
-        //            /* Create Viamo survey */
-        //            viamo.post('surveys', {
-        //              survey_title: 'Uliza Answers Response'
-        //            })
-        //            .then(function(response) {
-        //              var surveyId = response.body.data;
-        //              console.log(
-        //                chalk.yellow('[viamo_survey_created] ') + surveyId
-        //              );
-
-        //              /* Question */
-        //              viamo.post('surveys/' + surveyId + '/questions', {
-        //                response_type: 4,
-        //                audio_files[206069]: audioId
-        //              });
-
-        //              /* Answer */
-        //              viamo.post('surveys/' + surveyId + '/questions', {
-        //                response_type: 4,
-        //                audio_files[206069]: audioId
-        //              });
-
-        //              /* Create an intro */
-        //              viamo.post('surveys/' + surveyId + '/questions', {
-        //                response_type: 4,
-        //                audio_files[206069]: audioId
-        //              });
-        //              /* Add conclusion */
-        //              viamo.post('surveys/' + surveyId + '/questions', {
-        //                response_type: 4,
-        //                audio_files[206069]: audioId
-        //              });
-        //            });
-
-
-        //            // /* Create Viamo message */
-        //            // viamo.post('messages?audio_file[206069]=' + audioId, {
-        //            //   'has_voice': 1,
-        //            //   'has_sms': 0,
-        //            //   'title': 'Uliza Answers Response Message'
-        //            // })
-        //            // .then(function(response) {
-        //            //   var messageId = response.body.data;
-        //            //   console.log(
-        //            //     chalk.yellow('[viamo_message_created] ') + messageId
-        //            //   );
-        //            //   /* Create an outgoing call */
-        //            //   viamo.post('outgoing_calls', {
-        //            //     message_id: messageId,
-        //            //     send_to_phones: ticket.subscriber_phone
-        //            //   });
-        //            // })
-        //            .catch(function(error) {
-        //              console.error(error);
-        //            });
-        //          } else {
-        //            throw new Error(
-        //              'Viamo audio upload failed with response code '
-        //              + response.statusCode
-        //              + '.'
-        //            );
-        //          }
-        //        }));
-        //      }).run();
-        //    }
-        //  });
-        //});
-
       }
     }
+  })
+  .then(function() {
     return zammad.get('ticket_articles/by_ticket/' + ticket.zammad_id, {
       silent: true
     });
@@ -559,6 +550,11 @@ function pollZammad() {
     setPollTimeout();
   });
 }
+
+return db.init()
+.then(function() {
+  setPollTimeout();
+});
 
 viamo.get('languages', {silent: true}) /* Viamo connectivity test */
 .catch(function(error) {
