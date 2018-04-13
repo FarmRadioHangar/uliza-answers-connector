@@ -167,7 +167,7 @@ function processCall(id, audioBlockId) {
     return createTicket(
       payload, 
       deliveryLogEntry.subscriber.phone, 
-      messageBlock.response.open_audio_file, 
+      messageBlock.response.open_audio_url, 
       data
     );
   })
@@ -348,6 +348,18 @@ function isAudio(file) {
   return /^.+\.(wav|mp3|mp4|ogg|ul|webm)$/.test(file);
 }
 
+function firstAudioAttachment(article) {
+  if (article.attachments) {
+    for (i = 0; i < article.attachments.length; i++) {
+      var attachment = article.attachments[i];
+      if (isAudio(attachment.filename)) {
+        return attachment;
+      }
+    }
+  }
+  return null;
+}
+
 function fileExtension(file) {
   var pieces = file.split('.');
   return pieces[pieces.length - 1];
@@ -371,86 +383,135 @@ function monitorTicket(ticket) {
           chalk.yellow('[zammad_ticket_closed] ') + ticket.zammad_id
         );
         /* Post Viamo audio. */
-        Object.keys(articles).map(function(key) {
+
+        var audios = Object.keys(articles).map(function(key) {
           return articles[key];
         }).filter(function(article) {
-          return 10 == article.type_id; /* Is this all we need? */
-        }).map(function(article) {
-          article.attachments.forEach(function(attachment) {
-            if (isAudio(attachment.filename)) {
-              var zammadUrl = ZAMMAD_API_URL
-                + 'ticket_attachment/' + ticket.zammad_id
-                + '/' + article.id + '/' + attachment.id;
-              var tmpfile = tmp.fileSync();
-              ffmpeg().input(request.get({
-                url: zammadUrl,
-                encoding: null,
-                headers: {Authorization: 'Token token=' + ZAMMAD_API_TOKEN}
-              }))
-              .outputFormat('wav')
-              .output(fs.createWriteStream(tmpfile.name))
-              .on('end', function() {
-                fs.createReadStream(tmpfile.name)
-                .pipe(request.post({
-                  url: VIAMO_API_URL + 'audio_files',
-                  qs: {
-                    'description': attachment.filename,
-                    'file_extension': 'wav',
-                    'language_id': 206069,
-                    'api_key': VIAMO_API_KEY
-                  },
-                  json: true
-                }, function(error, response, body) {
-                  if (200 == response.statusCode) {
-                    var audioId = body.data;
-                    console.log(
-                      chalk.yellow('[viamo_audio_created] ') + audioId
-                    );
-                    /* Create Viamo message */
-                    viamo.post('messages?audio_file[206069]=' + audioId, {
-                      'has_voice': 1,
-                      'has_sms': 0,
-                      'title': 'Uliza Answers Response Message'
-                    })
-                    .then(function(response) {
-                      var messageId = response.body.data;
-                      console.log(
-                        chalk.yellow('[viamo_message_created] ') + messageId
-                      );
-                      /* Create an outgoing call */
-                      viamo.post('outgoing_calls', {
-                        message_id: messageId,
-                        send_to_phones: ticket.subscriber_phone
-                      });
-                    })
-                    .catch(function(error) {
-                      console.error(error);
-                    });
-                    /* Create Viamo survey */
-                    //viamo.post('surveys', {
-                    //  survey_title: 'Uliza Answers Response'
-                    //})
-                    //.then(function(response) {
-                    //  var surveyId = response.body.data;
-                    //  console.log(
-                    //    chalk.yellow('[viamo_survey_created] ') + surveyId
-                    //  );
-                    //  /* Attach audio to survey */
-                    //  return viamo.post('surveys/' + surveyId + '/questions', {
-                    //  })
-                    //});
-                  } else {
-                    throw new Error(
-                      'Viamo audio upload failed with response code '
-                      + response.statusCode
-                      + '.'
-                    );
-                  }
-                }));
-              }).run();
-            }
-          });
+          return firstAudioAttachment(article);
+        }).filter(function(audio) {
+          return !!audio;
         });
+
+        console.log(audios);
+
+        if (audios.length > 1) {
+
+          var question = audios[0];
+          var answer = audios[audios.length - 1];
+
+          console.log(zammadTicket);
+          console.log('-----------------------------------------------');
+          console.log(question);
+          console.log('-----------------------------------------------');
+          console.log(answer);
+
+        }
+
+
+        //Object.keys(articles).map(function(key) {
+        //  return articles[key];
+        //}).filter(function(article) {
+        //  return 10 == article.type_id; /* Is this all we need? */
+        //}).map(function(article) {
+        //  article.attachments.forEach(function(attachment) {
+        //    if (isAudio(attachment.filename)) {
+        //      var zammadUrl = ZAMMAD_API_URL
+        //        + 'ticket_attachment/' + ticket.zammad_id
+        //        + '/' + article.id + '/' + attachment.id;
+        //      var tmpfile = tmp.fileSync();
+        //      ffmpeg().input(request.get({
+        //        url: zammadUrl,
+        //        encoding: null,
+        //        headers: {Authorization: 'Token token=' + ZAMMAD_API_TOKEN}
+        //      }))
+        //      .outputFormat('wav')
+        //      .output(fs.createWriteStream(tmpfile.name))
+        //      .on('end', function() {
+        //        fs.createReadStream(tmpfile.name)
+        //        .pipe(request.post({
+        //          url: VIAMO_API_URL + 'audio_files',
+        //          qs: {
+        //            'description': attachment.filename,
+        //            'file_extension': 'wav',
+        //            'language_id': 206069,
+        //            'api_key': VIAMO_API_KEY
+        //          },
+        //          json: true
+        //        }, function(error, response, body) {
+        //          if (200 == response.statusCode) {
+        //            var audioId = body.data;
+        //            console.log(
+        //              chalk.yellow('[viamo_audio_created] ') + audioId
+        //            );
+
+        //            /* Create Viamo survey */
+        //            viamo.post('surveys', {
+        //              survey_title: 'Uliza Answers Response'
+        //            })
+        //            .then(function(response) {
+        //              var surveyId = response.body.data;
+        //              console.log(
+        //                chalk.yellow('[viamo_survey_created] ') + surveyId
+        //              );
+
+        //              /* Question */
+        //              viamo.post('surveys/' + surveyId + '/questions', {
+        //                response_type: 4,
+        //                audio_files[206069]: audioId
+        //              });
+
+        //              /* Answer */
+        //              viamo.post('surveys/' + surveyId + '/questions', {
+        //                response_type: 4,
+        //                audio_files[206069]: audioId
+        //              });
+
+        //              /* Create an intro */
+        //              viamo.post('surveys/' + surveyId + '/questions', {
+        //                response_type: 4,
+        //                audio_files[206069]: audioId
+        //              });
+        //              /* Add conclusion */
+        //              viamo.post('surveys/' + surveyId + '/questions', {
+        //                response_type: 4,
+        //                audio_files[206069]: audioId
+        //              });
+        //            });
+
+
+        //            // /* Create Viamo message */
+        //            // viamo.post('messages?audio_file[206069]=' + audioId, {
+        //            //   'has_voice': 1,
+        //            //   'has_sms': 0,
+        //            //   'title': 'Uliza Answers Response Message'
+        //            // })
+        //            // .then(function(response) {
+        //            //   var messageId = response.body.data;
+        //            //   console.log(
+        //            //     chalk.yellow('[viamo_message_created] ') + messageId
+        //            //   );
+        //            //   /* Create an outgoing call */
+        //            //   viamo.post('outgoing_calls', {
+        //            //     message_id: messageId,
+        //            //     send_to_phones: ticket.subscriber_phone
+        //            //   });
+        //            // })
+        //            .catch(function(error) {
+        //              console.error(error);
+        //            });
+        //          } else {
+        //            throw new Error(
+        //              'Viamo audio upload failed with response code '
+        //              + response.statusCode
+        //              + '.'
+        //            );
+        //          }
+        //        }));
+        //      }).run();
+        //    }
+        //  });
+        //});
+
       }
     }
     return zammad.get('ticket_articles/by_ticket/' + ticket.zammad_id, {
