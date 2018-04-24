@@ -480,13 +480,22 @@ function monitorTicket(ticket) {
                 }),
                 /* Create an intro */
                 viamo.post(
-                  'surveys/' + surveyId + '/introduction?audio_file[206069]=344879', {}
+                  'surveys/' + surveyId + '/introduction?audio_file[206069]=344943', {}
                 ),
                 /* Add conclusion */
                 viamo.post(
-                  'surveys/' + surveyId + '/conclusion?audio_file[206069]=344879', {}
+                  'surveys/' + surveyId + '/conclusion?audio_file[206069]=344947', {}
                 )
               ]);
+            })
+            .then(function(response) {
+              /* Satisfied ? */
+              return viamo.post('surveys/' + surveyId + '/questions'
+                  + '?audio_file[206069]=344977'
+                  + '&options[0]=Yes&options[1]=No&options[2]=Repeat&condition[0]=1,conclude&condition[1]=2,conclude&condition[2]=3,' + response[0].body.data, {
+                response_type: 1,
+                question_title: 'Uliza Answers Response'
+              });
             })
             .then(function() {
               return viamo.post('outgoing_calls', {
