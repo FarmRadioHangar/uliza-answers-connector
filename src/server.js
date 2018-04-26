@@ -490,7 +490,7 @@ function monitorTicket(ticket) {
                 }),
                 /* Create an intro */
                 viamo.post(
-                  'surveys/' + surveyId + '/introduction?audio_file[206069]=344943', {}
+                  'surveys/' + surveyId + '/introduction?audio_file[206069]=346093', {}
                 ),
                 /* Add conclusion */
                 viamo.post(
