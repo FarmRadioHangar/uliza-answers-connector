@@ -176,7 +176,11 @@ function processCall(id, audioBlockId) {
   .then(function() {
     return viamo.post('outgoing_calls', {
       message_id: 2595089,
-      send_to_phones: deliveryLogEntry.subscriber.phone
+      send_to_phones: deliveryLogEntry.subscriber.phone,
+      subscriber_data: {
+        receive_voice: 1,
+        receive_sms: 1
+      }
     });
     console.log(
       chalk.cyan('[sms_sent] ') + JSON.stringify(deliveryLogEntry.subscriber.phone)
