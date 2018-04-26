@@ -151,13 +151,14 @@ function processCall(id, audioBlockId) {
   })
   .then(function(data) {
     spinner.succeed();
+    var subject = 'Voice question received from ' + deliveryLogEntry.subscriber.phone;
     var payload = {
       title: '[viamoOpenEndedAudio]',
       group: 'Bart FM',
       customer_id: 'guess:' + deliveryLogEntry.subscriber.phone + '@uliza.fm',
       article: {
-        subject: 'n/a',
-        body: 'n/a',
+        subject: subject,
+        body: subject,
         attachments: [{
           filename: messageBlock.response.open_audio_file + '.mp3',
           data: '###', // Added later to prevent log proliferation
