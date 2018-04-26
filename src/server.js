@@ -133,6 +133,7 @@ function processCall(id, audioBlockId) {
     return response.body.data;
   })
   .then(function(data) { // = { interactions, delivery_log, tree }
+    console.log(data.interactions);
     messageBlock = getBlock(data.interactions, audioBlockId);
     var valid = messageBlock
       && messageBlock.response
@@ -169,6 +170,15 @@ function processCall(id, audioBlockId) {
       deliveryLogEntry.subscriber.phone, 
       messageBlock.response.open_audio_url, 
       data
+    );
+  })
+  .then(function() {
+    return viamo.post('outgoing_calls', {
+      message_id: 2595089,
+      send_to_phones: deliveryLogEntry.subscriber.phone
+    });
+    console.log(
+      chalk.cyan('[sms_sent] ') + JSON.stringify(deliveryLogEntry.subscriber.phone)
     );
   })
   .catch(function(error) {
