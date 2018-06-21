@@ -100,11 +100,11 @@ function createTicket(payload, phone, audioUrl, audioMimeData) {
   });
 }
 
-function processCall(id, audioBlockId) {
+function processCall(id, audioBlockId, isOutgoing) {
   var deliveryLogEntry, messageBlock;
   var spinner = ora('Encoding audio');
   spinner.spinner = spinners.arrow3;
-  return viamo.get('outgoing_calls/' + id + '/delivery_logs', {
+  return viamo.get((isOutgoing ? 'outgoing' : 'incoming') + '_calls/' + id + '/delivery_logs', {
     accept: [404]
   })
   .then(function(response) {
@@ -300,13 +300,13 @@ router.post('/update/:audio_block_id?', function(req, res) {
   return Promise.resolve()
   .then(function() {
     assertBodyField(req, 'delivery_status');
-    assertBodyField(req, 'outgoing_call_id');
+    //assertBodyField(req, 'outgoing_call_id');
     var audioBlockId = req.params.audio_block_id || req.query.audio_block_id;
     console.log(
       chalk.cyan('[audio_block_id] ') + JSON.stringify(audioBlockId)
     );
     var deliveryStatus = Number(req.body.delivery_status),
-        outgoingCallId = req.body.outgoing_call_id,
+        callId = req.body.outgoing_call_id || req.body.incoming_call_id,
         statusMessage  = viamo.deliveryStatus(deliveryStatus);
     console.log(
       chalk.cyan('[viamo_call_status_update] ') + JSON.stringify(req.body)
@@ -334,7 +334,7 @@ router.post('/update/:audio_block_id?', function(req, res) {
         break;
       case 6:  /* Finished (Complete) */
       case 7:  /* Finished (Incomplete) */
-        return processCall(outgoingCallId, audioBlockId);
+        return processCall(callId, audioBlockId, !!req.body.outgoing_call_id);
       case 8:  /* Failed (No Viamo Credit) */
         break;
       case 9:  /* Failed (Network) */
