@@ -61,6 +61,7 @@ function encodeAudio(url) {
       url: url,
       encoding: null,
     }))
+    .audioBitrate('128k')
     .outputFormat('mp3')
     .pipe(output);
     var buffer = '';
