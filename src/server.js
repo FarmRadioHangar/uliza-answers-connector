@@ -121,7 +121,7 @@ function processCall(id, audioBlockId, isOutgoing) {
     if (!logs || 0 == logs.length) {
       throw new Error('Empty delivery log.');
     }
-    deliveryLogEntry = logs[0];
+    deliveryLogEntry = logs[logs.length - 1];
     console.log(
       chalk.cyan('[tree_id] ') + deliveryLogEntry.tree_id
     );
