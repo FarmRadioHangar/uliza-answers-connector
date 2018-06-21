@@ -295,13 +295,16 @@ router.get('/users/me', checkToken, function(req, res) {
   });
 });
 
-router.post('/update', function(req, res) {
+router.post('/update/:audio_block_id?', function(req, res) {
   res.json(); /* The HTTP response here doesn't really matter. */
   return Promise.resolve()
   .then(function() {
     assertBodyField(req, 'delivery_status');
     assertBodyField(req, 'outgoing_call_id');
-    assertQueryParam(req, 'audio_block_id');
+    var audioBlockId = req.params.audio_block_id || req.query.audio_block_id;
+    console.log(
+      chalk.cyan('[audio_block_id] ') + JSON.stringify(audioBlockId)
+    );
     var deliveryStatus = Number(req.body.delivery_status),
         outgoingCallId = req.body.outgoing_call_id,
         statusMessage  = viamo.deliveryStatus(deliveryStatus);
@@ -331,7 +334,7 @@ router.post('/update', function(req, res) {
         break;
       case 6:  /* Finished (Complete) */
       case 7:  /* Finished (Incomplete) */
-        return processCall(outgoingCallId, req.query.audio_block_id);
+        return processCall(outgoingCallId, audioBlockId);
       case 8:  /* Failed (No Viamo Credit) */
         break;
       case 9:  /* Failed (Network) */
