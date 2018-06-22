@@ -397,7 +397,7 @@ function postViamoAudio(options, description) {
         qs: {
           'description': description,
           'file_extension': 'wav',
-          'language_id': 206069,
+          'language_id': 205238,
           'api_key': VIAMO_API_KEY
         },
         json: true
@@ -482,7 +482,7 @@ function monitorTicket(ticket) {
               );
               /* Question */
               return viamo.post('surveys/' + surveyId + '/questions' 
-                  + '?audio_file[206069]=' + questionAudioId
+                  + '?audio_file[205238]=' + questionAudioId
                   + '&options[]=', {
                 response_type: 4,
                 question_title: 'Uliza Answers Question'
@@ -492,25 +492,25 @@ function monitorTicket(ticket) {
               return Promise.all([
                 /* Answer */
                 viamo.post('surveys/' + surveyId + '/questions'
-                    + '?audio_file[206069]=' + answerAudioId
+                    + '?audio_file[205238]=' + answerAudioId
                     + '&options[]=', {
                   response_type: 4,
                   question_title: 'Uliza Answers Response'
                 }),
                 /* Create an intro */
                 viamo.post(
-                  'surveys/' + surveyId + '/introduction?audio_file[206069]=346093', {}
+                  'surveys/' + surveyId + '/introduction?audio_file[205238]=354469', {}
                 ),
                 /* Add conclusion */
                 viamo.post(
-                  'surveys/' + surveyId + '/conclusion?audio_file[206069]=344947', {}
+                  'surveys/' + surveyId + '/conclusion?audio_file[205238]=354470', {}
                 )
               ]);
             })
             .then(function(response) {
               /* Satisfied ? */
               return viamo.post('surveys/' + surveyId + '/questions'
-                  + '?audio_file[206069]=344977'
+                  + '?audio_file[205238]=354471'
                   + '&options[0]=Yes&options[1]=No&options[2]=Repeat&condition[0]=1,conclude&condition[1]=2,conclude&condition[2]=3,' + response[0].body.data, {
                 response_type: 1,
                 question_title: 'Uliza Answers Response'
