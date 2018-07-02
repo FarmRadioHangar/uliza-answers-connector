@@ -359,7 +359,7 @@ router.post('/update/:audio_block_id?', function(req, res) {
   });
 });
 
-var spinner = ora('Connecting to Viamo and Zammad services.')
+var spinner = ora('Connecting to Viamo and Zammad services.');
 spinner.start();
 
 function isAudio(file) {
