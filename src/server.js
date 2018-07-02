@@ -43,6 +43,8 @@ var VIAMO_API_KEY = process.env.VIAMO_API_KEY;
 var VIAMO_API_URL = process.env.VIAMO_API_URL ||
   'https://go.votomobile.org/api/v1/';
 
+var LANGUAGE_ID = process.env.LANGUAGE_ID || 205238;
+
 var router = express.Router();
 
 function getBlock(interactions, id) {
@@ -301,7 +303,11 @@ router.post('/update/:audio_block_id?', function(req, res) {
   return Promise.resolve()
   .then(function() {
     assertBodyField(req, 'delivery_status');
-    //assertBodyField(req, 'outgoing_call_id');
+    if (!req.body.outgoing_call_id && !req.body.incoming_call_id) {
+      var msg = 'Webhook request must include either outgoing_call_id or incoming_call_id';
+      console.error(chalk.redBright('[bad_webhook] ') + msg);
+      throw new Error('Invalid webhook request object.');
+    }
     var audioBlockId = req.params.audio_block_id || req.query.audio_block_id;
     console.log(
       chalk.cyan('[audio_block_id] ') + JSON.stringify(audioBlockId)
@@ -397,7 +403,7 @@ function postViamoAudio(options, description) {
         qs: {
           'description': description,
           'file_extension': 'wav',
-          'language_id': 205238,
+          'language_id': LANGUAGE_ID,
           'api_key': VIAMO_API_KEY
         },
         json: true
@@ -482,7 +488,7 @@ function monitorTicket(ticket) {
               );
               /* Question */
               return viamo.post('surveys/' + surveyId + '/questions' 
-                  + '?audio_file[205238]=' + questionAudioId
+                  + '?audio_file[LANGUAGE_ID]=' + questionAudioId
                   + '&options[]=', {
                 response_type: 4,
                 question_title: 'Uliza Answers Question'
@@ -492,25 +498,25 @@ function monitorTicket(ticket) {
               return Promise.all([
                 /* Answer */
                 viamo.post('surveys/' + surveyId + '/questions'
-                    + '?audio_file[205238]=' + answerAudioId
+                    + '?audio_file[LANGUAGE_ID]=' + answerAudioId
                     + '&options[]=', {
                   response_type: 4,
                   question_title: 'Uliza Answers Response'
                 }),
                 /* Create an intro */
                 viamo.post(
-                  'surveys/' + surveyId + '/introduction?audio_file[205238]=354469', {}
+                  'surveys/' + surveyId + '/introduction?audio_file[LANGUAGE_ID]=354469', {}
                 ),
                 /* Add conclusion */
                 viamo.post(
-                  'surveys/' + surveyId + '/conclusion?audio_file[205238]=354470', {}
+                  'surveys/' + surveyId + '/conclusion?audio_file[LANGUAGE_ID]=354470', {}
                 )
               ]);
             })
             .then(function(response) {
               /* Satisfied ? */
               return viamo.post('surveys/' + surveyId + '/questions'
-                  + '?audio_file[205238]=354471'
+                  + '?audio_file[LANGUAGE_ID]=354471'
                   + '&options[0]=Yes&options[1]=No&options[2]=Repeat&condition[0]=1,conclude&condition[1]=2,conclude&condition[2]=3,' + response[0].body.data, {
                 response_type: 1,
                 question_title: 'Uliza Answers Response'
