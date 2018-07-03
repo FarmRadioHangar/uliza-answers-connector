@@ -8,9 +8,17 @@ function inputField() {
   });
 }
 
-function singleColumnMenu(items) {
+function singleColumnMenu(items, options) {
   return new Promise((resolve, reject) => {
-    terminal.singleColumnMenu(items, (error, response) => {
+    terminal.singleColumnMenu(items, options, (error, response) => {
+      return error ? reject(error) : resolve(response);
+    });
+  });
+}
+
+function singleLineMenu(items, options) {
+  return new Promise((resolve, reject) => {
+    terminal.singleLineMenu(items, options, (error, response) => {
       return error ? reject(error) : resolve(response);
     });
   });
@@ -32,6 +40,10 @@ function drawImage(url, options) {
   });
 }
 
+function clear() {
+  return Promise.resolve(terminal.clear());
+}
+
 function term(msg) {
   return Promise.resolve(terminal(msg));
 }
@@ -39,8 +51,10 @@ function term(msg) {
 module.exports = {
   inputField,
   singleColumnMenu,
+  singleLineMenu,
   yesOrNo,
   drawImage,
+  clear,
   term,
   $: terminal
 };
