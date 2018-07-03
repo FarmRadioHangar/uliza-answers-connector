@@ -16,6 +16,22 @@ function singleColumnMenu(items) {
   });
 }
 
+function yesOrNo(options) {
+  return new Promise((resolve, reject) => {
+    terminal.yesOrNo(options, (error, result) => {
+      return error ? reject(error) : resolve(result);
+    });
+  });
+}
+
+function drawImage(url, options) {
+  return new Promise((resolve, reject) => {
+    terminal.drawImage(url, options, error => {
+      return error ? reject(error) : resolve();
+    });
+  });
+}
+
 function term(msg) {
   return Promise.resolve(terminal(msg));
 }
@@ -23,6 +39,8 @@ function term(msg) {
 module.exports = {
   inputField,
   singleColumnMenu,
+  yesOrNo,
+  drawImage,
   term,
   $: terminal
 };
