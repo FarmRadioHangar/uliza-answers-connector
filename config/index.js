@@ -26,7 +26,8 @@ return Promise.resolve()
     term.$.bold('\nWelcome to the Uliza Answers configuration wizard.');
     term.$.wrap('\nThis will take you through the process of configuring Uliza Answers for your campaign. To complete this wizard, you need the following prerequisites:');
     term.term('\n\n- A Viamo API key. This can be obtained from https://go.votomobile.org/settings (under the \'API Key\' tab).\n');
-    term.term('- A tree which includes the open-ended question block that asks the participant to contribute their question.\n');
+    term.term('- A tree that includes an open-ended question block asking the participant to contribute their question.');
+    term.term('\n\nIf a campaign tree doesn\'t already exist, use Viamo\'s web interface to create one before continuing.\n');
     term.term('\nEnter the Viamo API key: ');
   })
   .then(() => term.inputField())
