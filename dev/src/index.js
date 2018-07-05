@@ -1,0 +1,67 @@
+require('dotenv').config();
+
+var auth0Client = require('auth0').ManagementClient;
+var bodyparser  = require('body-parser');
+var cors        = require('cors');
+var express     = require('express');
+var jwks        = require('jwks-rsa');
+var jwt         = require('express-jwt');
+var db          = require('./db');
+var worker      = require('./worker');
+
+var SERVER_PORT = process.env.PORT || 8099;
+
+var app = express();
+
+app.use(cors());
+app.use(bodyparser.urlencoded({ extended: true }));
+app.use(bodyparser.json());
+app.use(express.static('spa'));
+
+var auth0 = new auth0Client({
+  domain: 'farmradio.eu.auth0.com',
+  clientId: process.env.AUTH0_CLIENT_ID,
+  clientSecret: process.env.AUTH0_CLIENT_SECRET,
+  scope: "read:users read:users_app_metadata",
+});
+
+var router = express.Router();
+
+router.get('/users/me', jwt({
+  secret: jwks.expressJwtSecret({
+    cache: true,
+    rateLimit: true,
+    jwksRequestsPerMinute: 5,
+    jwksUri: 'https://farmradio.eu.auth0.com/.well-known/jwks.json'
+  }),
+  audience: 'https://dev.farmradio.fm/api/',
+  issuer: 'https://farmradio.eu.auth0.com/',
+  algorithms: ['RS256']
+}), (req, res) => {
+  console.log('/users/me');
+  auth0
+    .getUser({ id: req.user.sub })
+    .then(user => {
+      var data = user.app_metadata || {};
+      data.auth0_user_id = req.user.sub;
+      res.json(data);
+    });
+});
+
+router.post('/call_status/:campaign_id', (req, res) => {
+  console.log('/');
+  res.json({ msg: 'OK' });
+});
+
+app.use(router);
+
+db.init()
+  .then(conn => {
+    app.listen(SERVER_PORT);
+    console.log(`Uliza Answers connector listening on port ${SERVER_PORT}.`);
+    worker.work();
+  })
+  .catch(error => {
+    console.error(error);
+    process.exit(1);
+  });

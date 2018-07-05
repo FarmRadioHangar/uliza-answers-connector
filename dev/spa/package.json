@@ -1,0 +1,7 @@
+{
+  "main": "app.js",
+  "dependencies": {
+    "auth0-js": "^9.6.1"
+  },
+  "devDependencies": {}
+}

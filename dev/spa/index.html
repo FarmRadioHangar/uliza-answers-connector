@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Login</title>
+    <base href="/">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div>
+      <button id="btn-get-user">Access connector.uliza.fm/users/me</button>
+      &nbsp;<button id="btn-login">Login</button>
+      &nbsp;<button id="btn-logout">Logout</button>
+      &nbsp;<button id="btn-clear">Clear log</button>
+      <br />
+      <br />
+      <pre id="output"></pre>
+    </div>
+    <script src="node_modules/auth0-js/build/auth0.js"></script>
+    <script src="auth0-variables.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
