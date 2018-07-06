@@ -27,41 +27,49 @@ var auth0 = new auth0Client({
 
 var router = express.Router();
 
-router.get('/users/me', jwt({
-  secret: jwks.expressJwtSecret({
-    cache: true,
-    rateLimit: true,
-    jwksRequestsPerMinute: 5,
-    jwksUri: 'https://farmradio.eu.auth0.com/.well-known/jwks.json'
-  }),
-  audience: 'https://dev.farmradio.fm/api/',
-  issuer: 'https://farmradio.eu.auth0.com/',
-  algorithms: ['RS256']
-}), (req, res) => {
-  console.log('/users/me');
-  auth0
-    .getUser({ id: req.user.sub })
-    .then(user => {
-      var data = user.app_metadata || {};
-      data.auth0_user_id = req.user.sub;
-      res.json(data);
-    });
+app.use(router).use((error, req, res, next) => {
+  res.json({ message: error.message });
 });
 
-router.post('/call_status/:campaign_id', (req, res) => {
-  console.log('/');
-  res.json({ msg: 'OK' });
-});
+db.init().then(conn => {
 
-app.use(router);
+  var handlers = require('./handlers')(conn);
 
-db.init()
-  .then(conn => {
-    app.listen(SERVER_PORT);
-    console.log(`Uliza Answers connector listening on port ${SERVER_PORT}.`);
-    worker.work();
-  })
-  .catch(error => {
-    console.error(error);
-    process.exit(1);
+  router.get('/users/me', jwt({
+    secret: jwks.expressJwtSecret({
+      cache: true,
+      rateLimit: true,
+      jwksRequestsPerMinute: 5,
+      jwksUri: 'https://farmradio.eu.auth0.com/.well-known/jwks.json'
+    }),
+    audience: 'https://dev.farmradio.fm/api/',
+    issuer: 'https://farmradio.eu.auth0.com/',
+    algorithms: ['RS256']
+  }), (req, res, next) => {
+    console.log('/users/me');
+    auth0.getUser({ id: req.user.sub })
+      .then(user => {
+        var data = user.app_metadata || {};
+        data.auth0_user_id = req.user.sub;
+        res.json(data);
+      });
   });
+
+  router.post('/call_status/:campaign_id', (req, res, next) => {
+    if (!req.body.delivery_status 
+      || (!req.body.outgoing_call_id && !req.body.incoming_call_id)) {
+      throw new Error('bad webhook request');
+    }
+    console.log('/call_status/' + req.params.campaign_id);
+    handlers.callStatusUpdate(req, res);
+  });
+
+  app.listen(SERVER_PORT);
+  console.log(`Uliza Answers connector listening on port ${SERVER_PORT}.`);
+
+  worker.work();
+
+})
+.catch(error => { 
+  console.error(error); 
+});

@@ -1,24 +1,19 @@
-
-function once() {
+function poll() {
   return Promise.resolve()
   .then(() => {
-    console.log('once');
+    process.stdout.write('.');
   })
   .then(() => {
-    poll();
+    setTimeout(() => {
+      poll().catch((error) => { console.error(error); });
+    }, 4000);
   });
-}
-
-function poll() {
-  setTimeout(() => {
-    once().catch((error) => { console.error(error); });
-  }, 4000);
 }
 
 module.exports = {
 
   work: function() {
-    once();
+    poll();
   }
 
 };
