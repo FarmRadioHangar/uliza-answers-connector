@@ -488,7 +488,7 @@ function monitorTicket(ticket) {
               );
               /* Question */
               return viamo.post('surveys/' + surveyId + '/questions' 
-                  + '?audio_file[LANGUAGE_ID]=' + questionAudioId
+                  + '?audio_file[' + LANGUAGE_ID + ']=' + questionAudioId
                   + '&options[]=', {
                 response_type: 4,
                 question_title: 'Uliza Answers Question'
@@ -498,25 +498,25 @@ function monitorTicket(ticket) {
               return Promise.all([
                 /* Answer */
                 viamo.post('surveys/' + surveyId + '/questions'
-                    + '?audio_file[LANGUAGE_ID]=' + answerAudioId
+                    + '?audio_file[' + LANGUAGE_ID + ']=' + answerAudioId
                     + '&options[]=', {
                   response_type: 4,
                   question_title: 'Uliza Answers Response'
                 }),
                 /* Create an intro */
                 viamo.post(
-                  'surveys/' + surveyId + '/introduction?audio_file[LANGUAGE_ID]=354469', {}
+                  'surveys/' + surveyId + '/introduction?audio_file[' + LANGUAGE_ID + ']=354469', {}
                 ),
                 /* Add conclusion */
                 viamo.post(
-                  'surveys/' + surveyId + '/conclusion?audio_file[LANGUAGE_ID]=354470', {}
+                  'surveys/' + surveyId + '/conclusion?audio_file[' + LANGUAGE_ID + ']=354470', {}
                 )
               ]);
             })
             .then(function(response) {
               /* Satisfied ? */
               return viamo.post('surveys/' + surveyId + '/questions'
-                  + '?audio_file[LANGUAGE_ID]=354471'
+                  + '?audio_file[' + LANGUAGE_ID + ']=354471'
                   + '&options[0]=Yes&options[1]=No&options[2]=Repeat&condition[0]=1,conclude&condition[1]=2,conclude&condition[2]=3,' + response[0].body.data, {
                 response_type: 1,
                 question_title: 'Uliza Answers Response'

@@ -7,7 +7,6 @@ var express     = require('express');
 var jwks        = require('jwks-rsa');
 var jwt         = require('express-jwt');
 var db          = require('./db');
-var worker      = require('./worker');
 
 var SERVER_PORT = process.env.PORT || 8099;
 
@@ -34,6 +33,7 @@ app.use(router).use((error, req, res, next) => {
 db.init().then(conn => {
 
   var handlers = require('./handlers')(conn);
+  var worker   = require('./worker')(conn);
 
   router.get('/users/me', jwt({
     secret: jwks.expressJwtSecret({
@@ -51,6 +51,7 @@ db.init().then(conn => {
       .then(user => {
         var data = user.app_metadata || {};
         data.auth0_user_id = req.user.sub;
+//        data.zammad_token = process.env.ZAMMAD_API_TOKEN;
         res.json(data);
       });
   });
