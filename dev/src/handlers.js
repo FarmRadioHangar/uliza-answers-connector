@@ -40,7 +40,7 @@ function createTicket(ticket) {
       }
       ticket.campaign = results[0];
       var uri = ticket.call.type + '_calls/' + ticket.call.id + '/delivery_logs';
-      return rp({ 
+      return rp({
         uri: VIAMO_API_URL + uri,
         headers: { api_key: ticket.campaign.viamo_api_key },
         json: true
@@ -54,9 +54,9 @@ function createTicket(ticket) {
       logEntry = logs[logs.length - 1];
       if (logEntry.tree_id != ticket.campaign.viamo_tree_id) {
         throw new Error('call tree ID doesn\'t match campaign tree');
-      } 
+      }
       var uri = 'trees/' + logEntry.tree_id + '/delivery_logs/' + logEntry.id;
-      return rp({ 
+      return rp({
         uri: VIAMO_API_URL + uri,
         headers: { api_key: ticket.campaign.viamo_api_key },
         json: true
@@ -92,28 +92,31 @@ function createTicket(ticket) {
         }
       };
       payload.article.attachments[0].data = data;
-      return rp({ 
+      return rp({
         uri: ZAMMAD_API_URL + 'tickets',
         method: 'POST',
         body: payload,
-        headers: { 
-          Authorization: 'Token token=' + process.env.ZAMMAD_API_TOKEN 
+        headers: {
+          Authorization: 'Token token=' + process.env.ZAMMAD_API_TOKEN
         },
         json: true
       });
     })
     .then(response => {
       console.log('https://answers.uliza.fm/#ticket/zoom/' + response.id);
-      var query = 'INSERT INTO tickets (subscriber_phone, zammad_id, article_count, state_id, created_at) VALUES (?, ?, ?, ?, DATETIME(\'now\'));';
-      return db.run(query, 
-        logEntry.
-        subscriber.phone, 
-        response.id, 
-        response.article_count, 
-        response.state_id
+      var query = 'INSERT INTO tickets (subscriber_phone, audio_url, campaign_id, zammad_id, article_count, state_id, first_article_id, monitor, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, 1, DATETIME(\'now\'));';
+      return db.run(query,
+        logEntry.subscriber.phone,
+        messageBlock.response.open_audio_url,
+        ticket.campaign.id,
+        response.id,
+        response.article_count,
+        response.state_id,
+        response.article_ids[0]
       );
     })
     .then(res => {
+      // Send SMS?
       console.log(res.lastID);
     })
     .catch(error => {
@@ -122,7 +125,6 @@ function createTicket(ticket) {
 }
 
 module.exports = function(conn) {
-
   db = conn; return {
 
     callStatusUpdate: function(req, res) {
@@ -149,6 +151,5 @@ module.exports = function(conn) {
       res.json();
     }
 
-  }
-
+  };
 };
