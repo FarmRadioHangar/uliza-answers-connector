@@ -138,7 +138,8 @@ function scheduleResponse(ticket, audio) {
   .then(() => {
     // Schedule call
     console.log({ survey_id: surveyId, send_to_phones: ticket.subscriber_phone });
-    return rp({
+    //return rp({
+    console.log({
       method: 'POST',
       uri: VIAMO_API_URL + 'outgoing_calls',
       body: {
@@ -150,7 +151,77 @@ function scheduleResponse(ticket, audio) {
     });
   })
   .then(response => {
-    console.log('Outgoing call scheduled: ' + response.data);
+    //console.log('Outgoing call scheduled: ' + response.data);
+  });
+}
+
+function createAnswer(articles, ticket) {
+  var isAudio = function(file) {
+    if (!file) return false;
+    return /^.+\.(wav|mp3|mp4|ogg|ul|webm)$/.test(file);
+  }
+  var audio = [];
+  Object.keys(articles).forEach(key => {
+    var article = articles[key];
+    //
+    if (article.attachments) {
+      article.attachments.forEach(attachment => {
+        if (isAudio(attachment.filename)) {
+          audio.push({
+            articleId: article.id,
+            attachmentId: attachment.id
+          });
+        }
+      });
+    }
+  });
+  console.log(audio);
+  return Promise.all(
+    audio
+      .filter(answer => answer.articleId != ticket.first_article_id)
+      .map(answer => {
+        var audio = {};
+        var zammadUrl = ZAMMAD_API_URL + 'ticket_attachment'
+          + '/' + ticket.zammad_id
+          + '/' + answer.articleId
+          + '/' + answer.attachmentId;
+        // Post answer audio
+        console.log(zammadUrl);
+        return postViamoAudio(ticket, request.get({
+          url: zammadUrl,
+          encoding: null,
+          headers: {
+            Authorization: 'Token token=' + process.env.ZAMMAD_API_TOKEN
+          }
+        }))
+        .then(response => {
+          audio.answer = response.body.data;
+          // Post question audio
+          return postViamoAudio(ticket, request.get({
+            url: ticket.audio_url,
+            encoding: null,
+            headers: { api_key: process.env.VIAMO_API_KEY }
+          }));
+        })
+        .then(response => {
+          audio.question = response.body.data;
+          var ids = ticket.viamo_audio.split(':');
+          audio.intro = ids[0];
+          audio.conclusion = ids[1];
+          audio.satisfied = ids[2];
+          return audio;
+        });
+    })
+  )
+  .then(responses => {
+    return Promise.all(
+      responses.map(response => {
+        return scheduleResponse(ticket, response)
+          .then(() => {
+            console.log('Un-monitoring ticket #' + ticket.id);
+            return db.run('UPDATE tickets SET monitor = 0 WHERE id = ?;', ticket.id);
+          });
+      }));
   });
 }
 
@@ -167,84 +238,33 @@ function monitor(ticket) {
     var assets = response.assets;
     var zammad = assets.Ticket[ticket.zammad_id];
     var articles = assets.TicketArticle;
-    var wasClosed = ticket.state_id != zammad.state_id
-        && 'closed' == response.assets.TicketState[zammad.state_id].name;
     if (ticket.state_id != zammad.state_id
         || ticket.article_count != zammad.article_count)
     { // State or article count has changed
       var query = 'UPDATE tickets SET article_count = ?, state_id = ? WHERE id = ?;';
       db.run(query, zammad.article_count, zammad.state_id, ticket.id);
     }
-    if (wasClosed) {
+    console.log(zammad.state_id)
+    if ('closed' == assets.TicketState[zammad.state_id].name) {
       console.log('\nTicket closed: ' + zammad.id);
-      //
       // Check for linked tickets?
-
-      // Extract audio
-      var isAudio = function(file) {
-        if (!file) return false;
-        return /^.+\.(wav|mp3|mp4|ogg|ul|webm)$/.test(file);
-      }
-      var audio = [];
-      Object.keys(articles).forEach(key => {
-        var article = articles[key];
-        if (article.attachments) {
-          article.attachments.forEach(attachment => {
-            if (isAudio(attachment.filename)) {
-              audio.push({
-                articleId: article.id,
-                attachmentId: attachment.id
-              });
-            }
-          });
-        }
-      });
       return Promise.all(
-        audio
-          .filter(answer => answer.articleId != ticket.first_article_id)
-          .map(answer => {
-            var audio = {};
-            var zammadUrl = ZAMMAD_API_URL + 'ticket_attachment'
-              + '/' + ticket.zammad_id
-              + '/' + answer.articleId
-              + '/' + answer.attachmentId;
-            // Post answer audio
-            console.log(zammadUrl);
-            return postViamoAudio(ticket, request.get({
-              url: zammadUrl,
-              encoding: null,
-              headers: {
-                Authorization: 'Token token=' + process.env.ZAMMAD_API_TOKEN
-              }
-            }))
-            .then(response => {
-              audio.answer = response.body.data;
-              // Post question audio
-              return postViamoAudio(ticket, request.get({
-                url: ticket.audio_url,
-                encoding: null,
-                headers: { api_key: process.env.VIAMO_API_KEY }
-              }));
+        response.links
+          .filter(link => link.link_type == 'parent')
+          .map(link => {
+            return rp({
+              uri: ZAMMAD_API_URL + 'tickets/' + link.link_object_value + '/?all=true',
+              headers: { Authorization: 'Token token=' + process.env.ZAMMAD_API_TOKEN },
+              json: true
             })
             .then(response => {
-              audio.question = response.body.data;
-              var ids = ticket.viamo_audio.split(':');
-              audio.intro = ids[0];
-              audio.conclusion = ids[1];
-              audio.satisfied = ids[2];
-              return audio;
+              createAnswer(response.assets.TicketArticle, ticket);
             });
-        })
+          })
       )
-      .then(responses => {
-        return Promise.all(
-          responses.map(response => {
-            return scheduleResponse(ticket, response)
-              .then(() => {
-                console.log('Un-monitoring ticket #' + ticket.id);
-                return db.run('UPDATE tickets SET monitor = 0 WHERE id = ?;', ticket.id);
-              });
-          }));
+      .then(() => {
+        // Attached answer
+        return createAnswer(articles, ticket);
       });
     }
   });
