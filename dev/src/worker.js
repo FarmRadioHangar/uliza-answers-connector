@@ -138,8 +138,7 @@ function scheduleResponse(ticket, audio) {
   .then(() => {
     // Schedule call
     console.log({ survey_id: surveyId, send_to_phones: ticket.subscriber_phone });
-    //return rp({
-    console.log({
+    return rp({ //console.log({
       method: 'POST',
       uri: VIAMO_API_URL + 'outgoing_calls',
       body: {
