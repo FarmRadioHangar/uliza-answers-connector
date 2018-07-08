@@ -244,8 +244,8 @@ function monitor(ticket) {
       var query = 'UPDATE tickets SET article_count = ?, state_id = ? WHERE id = ?;';
       db.run(query, zammad.article_count, zammad.state_id, ticket.id);
     }
-    console.log(zammad.state_id)
-    if ('closed' == assets.TicketState[zammad.state_id].name) {
+    if (assets.TicketState[zammad.state_id] && 
+        'closed' == assets.TicketState[zammad.state_id].name) {
       console.log('\nTicket closed: ' + zammad.id);
       // Check for linked tickets?
       return Promise.all(
