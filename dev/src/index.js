@@ -50,7 +50,7 @@ db.init().then(conn => {
       || (!req.body.outgoing_call_id && !req.body.incoming_call_id)) {
       throw new Error('bad webhook request');
     }
-    console.log('/call_status/' + req.params.campaign_id);
+    console.log('/call_status_update/' + req.params.campaign_id);
     handlers.callStatusUpdate(req, res);
   })
   .use((error, req, res, next) => {
