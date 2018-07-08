@@ -80,6 +80,7 @@ window.addEventListener('load', function() {
       headers: { 'Authorization': 'Bearer ' + token }
     })
     .then(function(response) {
+      console.log(response.status);
       if (401 == response.status) {
         return {
           error: 'The server returned: 401 Unauthorized'

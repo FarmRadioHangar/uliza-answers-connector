@@ -26,8 +26,18 @@ var auth0 = new auth0Client({
 
 var router = express.Router();
 
-app.use(router).use((error, req, res, next) => {
-  res.json({ message: error.message });
+app.use(router);
+
+var checkJwt = jwt({
+  secret: jwks.expressJwtSecret({
+    cache: true,
+    rateLimit: true,
+    jwksRequestsPerMinute: 5,
+    jwksUri: 'https://farmradio.eu.auth0.com/.well-known/jwks.json'
+  }),
+  audience: 'https://dev.farmradio.fm/api/',
+  issuer: 'https://farmradio.eu.auth0.com/',
+  algorithms: ['RS256']
 });
 
 db.init().then(conn => {
@@ -35,19 +45,22 @@ db.init().then(conn => {
   var handlers = require('./handlers')(conn);
   var worker   = require('./worker')(conn);
 
-  router.get('/users/me', jwt({
-    secret: jwks.expressJwtSecret({
-      cache: true,
-      rateLimit: true,
-      jwksRequestsPerMinute: 5,
-      jwksUri: 'https://farmradio.eu.auth0.com/.well-known/jwks.json'
-    }),
-    audience: 'https://dev.farmradio.fm/api/',
-    issuer: 'https://farmradio.eu.auth0.com/',
-    algorithms: ['RS256']
-  }), (req, res, next) => {
+  router.post('/call_status_update/:campaign_id', (req, res, next) => {
+    if (!req.body.delivery_status
+      || (!req.body.outgoing_call_id && !req.body.incoming_call_id)) {
+      throw new Error('bad webhook request');
+    }
+    console.log('/call_status/' + req.params.campaign_id);
+    handlers.callStatusUpdate(req, res);
+  })
+  .use((error, req, res, next) => {
+    res.json({ message: error.message });
+  });
+
+  router.get('/users/me', checkJwt, (req, res, next) => {
     console.log('/users/me');
-    auth0.getUser({ id: req.user.sub })
+    auth0
+      .getUser({ id: req.user.sub })
       .then(user => {
         var data = user.app_metadata || {};
         data.auth0_user_id = req.user.sub;
@@ -56,21 +69,12 @@ db.init().then(conn => {
       });
   });
 
-  router.post('/call_status/:campaign_id', (req, res, next) => {
-    if (!req.body.delivery_status 
-      || (!req.body.outgoing_call_id && !req.body.incoming_call_id)) {
-      throw new Error('bad webhook request');
-    }
-    console.log('/call_status/' + req.params.campaign_id);
-    handlers.callStatusUpdate(req, res);
-  });
-
   app.listen(SERVER_PORT);
   console.log(`Uliza Answers connector listening on port ${SERVER_PORT}.`);
 
   worker.work();
 
 })
-.catch(error => { 
-  console.error(error); 
-});
+.catch(error => {
+  console.error(error);
+})
