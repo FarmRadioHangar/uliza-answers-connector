@@ -138,7 +138,8 @@ function scheduleResponse(ticket, audio) {
   .then(() => {
     // Schedule call
     console.log({ survey_id: surveyId, send_to_phones: ticket.subscriber_phone });
-    return rp({ //console.log({
+    //return rp({ //console.log({
+    console.log({
       method: 'POST',
       uri: VIAMO_API_URL + 'outgoing_calls',
       body: {
@@ -175,7 +176,6 @@ function createAnswer(articles, ticket) {
       });
     }
   });
-  console.log(audio);
   return Promise.all(
     audio
       .filter(answer => answer.articleId != ticket.first_article_id)
@@ -226,7 +226,8 @@ function createAnswer(articles, ticket) {
 }
 
 function monitor(ticket) {
-  process.stdout.write('' + ticket.zammad_id);
+  console.log('=============================================================');
+  console.log(ticket.zammad_id);
   return rp({
     uri: ZAMMAD_API_URL + 'tickets/' + ticket.zammad_id + '/?all=true',
     headers: {
@@ -258,7 +259,7 @@ function monitor(ticket) {
               json: true
             })
             .then(response => {
-              createAnswer(response.assets.TicketArticle, ticket);
+              return createAnswer(response.assets.TicketArticle, ticket);
             });
           })
       )
