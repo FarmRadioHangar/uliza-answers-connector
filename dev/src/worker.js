@@ -150,7 +150,7 @@ function scheduleResponse(ticket, audio) {
     });
   })
   .then(response => {
-    //console.log('Outgoing call scheduled: ' + response.data);
+    console.log('Outgoing call scheduled: ' + response.data);
   });
 }
 
@@ -168,7 +168,8 @@ function createAnswer(articles, ticket) {
         if (isAudio(attachment.filename)) {
           audio.push({
             articleId: article.id,
-            attachmentId: attachment.id
+            attachmentId: attachment.id,
+            ticketId: article.ticket_id
           });
         }
       });
@@ -181,7 +182,7 @@ function createAnswer(articles, ticket) {
       .map(answer => {
         var audio = {};
         var zammadUrl = ZAMMAD_API_URL + 'ticket_attachment'
-          + '/' + ticket.zammad_id
+          + '/' + answer.ticketId
           + '/' + answer.articleId
           + '/' + answer.attachmentId;
         // Post answer audio
