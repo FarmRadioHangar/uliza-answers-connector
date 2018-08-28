@@ -138,8 +138,7 @@ function scheduleResponse(ticket, audio) {
   .then(() => {
     // Schedule call
     console.log({ survey_id: surveyId, send_to_phones: ticket.subscriber_phone });
-    //return rp({ //console.log({
-    console.log({
+    return rp({ 
       method: 'POST',
       uri: VIAMO_API_URL + 'outgoing_calls',
       body: {
@@ -247,7 +246,9 @@ function monitor(ticket) {
     }
     if (assets.TicketState[zammad.state_id] && 
         'closed' == assets.TicketState[zammad.state_id].name) {
-      console.log('\nTicket closed: ' + zammad.id);
+      console.log('\nTicket closed: ' + zammad.id + ' Monitor (count): ' + ticket.monitor);
+      var query = 'UPDATE tickets SET monitor = ? WHERE id = ?;';
+      db.run(query, ticket.monitor + 1, ticket.id);
       // Check for linked tickets?
       return Promise.all(
         response.links
@@ -276,7 +277,7 @@ function poll() {
     .resolve()
     .then(() => {
       process.stdout.write('.');
-      return db.all('SELECT tickets.*, campaigns.language_id, campaigns.viamo_api_key, campaigns.viamo_audio, campaigns.id as campaign_id, campaigns.name as campaign_name FROM tickets JOIN campaigns on tickets.campaign_id = campaigns.id WHERE tickets.monitor = 1;');
+      return db.all('SELECT tickets.*, campaigns.language_id, campaigns.viamo_api_key, campaigns.viamo_audio, campaigns.id as campaign_id, campaigns.name as campaign_name FROM tickets JOIN campaigns on tickets.campaign_id = campaigns.id WHERE tickets.monitor BETWEEN 1 AND 21;');
     })
     .then(results => {
       return sequential(
