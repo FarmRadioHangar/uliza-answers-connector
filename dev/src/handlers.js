@@ -116,7 +116,19 @@ function createTicket(ticket) {
       );
     })
     .then(res => {
-      // Send SMS?
+//      // Lookup existing subscriber
+//      return rp({
+//        uri: VIAMO_API_URL + uri,
+//        headers: { api_key: ticket.campaign.viamo_api_key },
+//        json: true
+//      })
+//      .then(response => {
+//      });
+//
+//      // Create new subscriber
+//
+//      // Send SMS?
+
       console.log(res.lastID);
     })
     .catch(error => {
