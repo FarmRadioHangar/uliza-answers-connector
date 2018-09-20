@@ -1,4 +1,5 @@
 var ffmpeg     = require('fluent-ffmpeg');
+var ffmpegProc = require('ffmpeg');
 var fs         = require('fs');
 var request    = require('request');
 var rp         = require('request-promise');
@@ -12,37 +13,84 @@ var db;
 
 function postViamoAudio(ticket, input) {
   return new Promise((resolve, reject) => {
-    var tmpfile = tmp.fileSync();
-    ffmpeg().input(input)
-      .outputFormat('wav')
-      .output(fs.createWriteStream(tmpfile.name))
-      .on('end', () => {
-        fs.createReadStream(tmpfile.name)
-          .pipe(request.post({
-            url: VIAMO_API_URL + 'audio_files',
-            qs: {
-              'description': ticket.campaign_name,
-              'file_extension': 'wav',
-              'language_id': ticket.language_id,
-              'api_key': ticket.viamo_api_key
-            },
-            json: true
-          }, (error, response, body) => {
-            if (error) {
-              reject(error);
-            } else {
-              if (200 != response.statusCode) {
-                return reject('Viamo audio upload failed with response code: ' + response.statusCode);
-              }
-              resolve(response);
-            }
-          })
-        );
-      })
-      .on('error', error => {
+    var infile = tmp.fileSync();
+    input
+      .pipe(fs.createWriteStream(infile.name))
+      .on('error', (error) => {
         reject(error);
       })
-      .run();
+      .on('close', () => {
+        var tmpfile = tmp.fileSync();
+
+        try {
+          new ffmpegProc(infile.name, (err, out) => {
+            if (!err) {
+              out.fnExtractSoundToMP3(tmpfile.name, (error, file) => {
+                if (!error) {
+                  fs.createReadStream(file)
+                    .pipe(request.post({
+                      url: VIAMO_API_URL + 'audio_files',
+                      qs: {
+                        'description': ticket.campaign_name,
+                        'file_extension': 'mp3',
+                        'language_id': ticket.language_id,
+                        'api_key': ticket.viamo_api_key
+                      },
+                      json: true
+                    }, (error, response, body) => {
+                      if (error) {
+                        reject(error);
+                      } else {
+                        if (200 != response.statusCode) {
+                          return reject('Viamo audio upload failed with response code: ' + response.statusCode);
+                        }
+                        resolve(response);
+                      }
+                    })
+                  );
+                } else {
+                  reject(error);
+                }
+	      });
+            } else {
+              reject(error);
+            }
+          });
+        } catch (error) {
+          reject(error);
+        }
+
+        //ffmpeg().input(fs.createReadStream(infile.name))
+        //  .outputFormat('wav')
+        //  .output(fs.createWriteStream(tmpfile.name))
+        //  .on('end', () => {
+        //    fs.createReadStream(tmpfile.name)
+        //      .pipe(request.post({
+        //        url: VIAMO_API_URL + 'audio_files',
+        //        qs: {
+        //          'description': ticket.campaign_name,
+        //          'file_extension': 'wav',
+        //          'language_id': ticket.language_id,
+        //          'api_key': ticket.viamo_api_key
+        //        },
+        //        json: true
+        //      }, (error, response, body) => {
+        //        if (error) {
+        //          reject(error);
+        //        } else {
+        //          if (200 != response.statusCode) {
+        //            return reject('Viamo audio upload failed with response code: ' + response.statusCode);
+        //          }
+        //          resolve(response);
+        //        }
+        //      })
+        //    );
+        //  })
+        //  .on('error', error => {
+        //    reject(error);
+        //  })
+        //  .run();
+      });
   });
 }
 

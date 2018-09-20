@@ -64,7 +64,7 @@ db.init().then(conn => {
       .then(user => {
         var data = user.app_metadata || {};
         data.auth0_user_id = req.user.sub;
-//        data.zammad_token = process.env.ZAMMAD_API_TOKEN;
+        //data.zammad_token = process.env.ZAMMAD_API_TOKEN;
         res.json(data);
       });
   });
