@@ -173,14 +173,15 @@ function createTicket(ticket) {
       return encodeAudio(messageBlock.response.open_audio_url);
     })
     .then(data => {
-      var subject = messageBlock.response.open_audio_file;
+      var subject = 'Voice question received from ' + ticket.call.subscriber_phone;
+      var body = messageBlock.response.open_audio_file;
       var payload = {
         title: `${ticket.campaign.name} [${ticket.call.subscriber_phone}]`,
         group: ticket.campaign.zammad_group,
         customer_id: 'guess:' + ticket.call.subscriber_phone + '@uliza.fm',
         article: {
           subject: subject,
-          body: subject,
+          body: body,
           attachments: [{
             filename: messageBlock.response.open_audio_file + '.mp3',
             data: '###', // Added later to prevent log proliferation
