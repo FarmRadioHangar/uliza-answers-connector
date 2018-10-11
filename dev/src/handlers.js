@@ -79,13 +79,49 @@ function encodeAudio(url) {
 }
 
 function createTicket(ticket) {
-  var logEntry, messageBlock;
+  var logEntry, messageBlock, zammadUser;
   return db.all('SELECT * FROM campaigns WHERE id = ?;', ticket.campaign.id)
     .then(results => {
       if (!results.length) {
         throw new Error('invalid campaign ID');
       }
       ticket.campaign = results[0];
+      //
+      return rp({
+        uri: ZAMMAD_API_URL + 'users/search?query=' + ticket.call.subscriber_phone,
+        method: 'GET',
+        headers: {
+          Authorization: 'Token token=' + process.env.ZAMMAD_API_TOKEN
+        },
+        json: true
+      });
+    })
+    .then(data => {
+      if (data.length) {
+        return data[0];
+      } else {
+        // Create a Zammad user
+        return rp({
+          uri: ZAMMAD_API_URL + 'users',
+          method: 'POST',
+          body: {
+            email: ticket.call.subscriber_phone + '@uliza.fm',
+            mobile: ticket.call.subscriber_phone
+          },
+          headers: {
+            Authorization: 'Token token=' + process.env.ZAMMAD_API_TOKEN
+          },
+          json: true
+        });
+      }
+    })
+    .then(data => {
+      zammadUser = data;
+//      console.log(zammadUser);
+//      process.exit(0);
+//    })
+//    //
+//    .then(data => {
       var uri = ticket.call.type + '_calls/' + ticket.call.id + '/delivery_logs';
       console.log(uri);
       return rp({
@@ -158,7 +194,8 @@ function createTicket(ticket) {
         method: 'POST',
         body: payload,
         headers: {
-          Authorization: 'Token token=' + process.env.ZAMMAD_API_TOKEN
+          'Authorization': 'Token token=' + process.env.ZAMMAD_API_TOKEN,
+          'X-On-Behalf-Of': zammadUser.login
         },
         json: true
       });
