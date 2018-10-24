@@ -97,16 +97,20 @@ function createTicket(ticket) {
       });
     })
     .then(data => {
-      if (data.length) {
+      if (data.length > 0) {
         return data[0];
       } else {
         // Create a Zammad user
+	var mobile = String(ticket.call.subscriber_phone);
+        if (mobile.length && ('+' != mobile[0])) {
+          mobile = '+' + mobile;
+        }
         return rp({
           uri: ZAMMAD_API_URL + 'users',
           method: 'POST',
           body: {
             email: ticket.call.subscriber_phone + '@uliza.fm',
-            mobile: ticket.call.subscriber_phone
+            mobile: mobile
           },
           headers: {
             Authorization: 'Token token=' + process.env.ZAMMAD_API_TOKEN
@@ -174,14 +178,14 @@ function createTicket(ticket) {
     })
     .then(data => {
       var subject = 'Voice question received from ' + ticket.call.subscriber_phone;
-      var body = messageBlock.response.open_audio_file;
+      //var body = messageBlock.response.open_audio_file;
       var payload = {
         title: `${ticket.campaign.name} [${ticket.call.subscriber_phone}]`,
         group: ticket.campaign.zammad_group,
         customer_id: 'guess:' + ticket.call.subscriber_phone + '@uliza.fm',
         article: {
           subject: subject,
-          body: body,
+          body: subject,
           attachments: [{
             filename: messageBlock.response.open_audio_file + '.mp3',
             data: '###', // Added later to prevent log proliferation
