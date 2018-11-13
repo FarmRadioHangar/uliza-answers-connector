@@ -222,6 +222,8 @@ function createTicket(ticket) {
 }
 
 function createUlizaTicket(ticket) {
+  console.log('---------------------------');
+  console.log(ticket);
   var zammadUser;
   return db.all('SELECT * FROM campaigns WHERE id = ?;', ticket.campaign.id)
     .then(results => {
@@ -264,6 +266,9 @@ function createUlizaTicket(ticket) {
     })
     .then(data => {
       zammadUser = data;
+      return encodeAudio(ticket.audio_url);
+    })
+    .then(data => {
       var subject = 'Voice question received from Uliza user ' + ticket.call.subscriber_phone;
       //var body = messageBlock.response.open_audio_file;
       var payload = {
@@ -297,7 +302,7 @@ function createUlizaTicket(ticket) {
       var query = 'INSERT INTO tickets (subscriber_phone, audio_url, campaign_id, zammad_id, article_count, state_id, first_article_id, monitor, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, 1, DATETIME(\'now\'));';
       return db.run(query,
         ticket.call.subscriber_phone,
-        messageBlock.response.open_audio_url,
+        ticket.audio_url,
         ticket.campaign.id,
         response.id,
         response.article_count,
