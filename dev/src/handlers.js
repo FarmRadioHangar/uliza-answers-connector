@@ -101,7 +101,7 @@ function createTicket(ticket) {
         return data[0];
       } else {
         // Create a Zammad user
-	var mobile = String(ticket.call.subscriber_phone);
+	      var mobile = String(ticket.call.subscriber_phone);
         if (mobile.length && ('+' != mobile[0])) {
           mobile = '+' + mobile;
         }
@@ -121,11 +121,6 @@ function createTicket(ticket) {
     })
     .then(data => {
       zammadUser = data;
-//      console.log(zammadUser);
-//      process.exit(0);
-//    })
-//    //
-//    .then(data => {
       var uri = ticket.call.type + '_calls/' + ticket.call.id + '/delivery_logs';
       console.log(uri);
       return rp({
@@ -219,19 +214,98 @@ function createTicket(ticket) {
       );
     })
     .then(res => {
-//      // Lookup existing subscriber
-//      return rp({
-//        uri: VIAMO_API_URL + uri,
-//        headers: { api_key: ticket.campaign.viamo_api_key },
-//        json: true
-//      })
-//      .then(response => {
-//      });
-//
-//      // Create new subscriber
-//
-//      // Send SMS?
+      console.log(res.lastID);
+    })
+    .catch(error => {
+      console.error(error);
+    });
+}
 
+function createUlizaTicket(ticket) {
+  var zammadUser;
+  return db.all('SELECT * FROM campaigns WHERE id = ?;', ticket.campaign.id)
+    .then(results => {
+      if (!results.length) {
+        throw new Error('invalid campaign ID');
+      }
+      ticket.campaign = results[0];
+      //
+      return rp({
+        uri: ZAMMAD_API_URL + 'users/search?query=' + ticket.call.subscriber_phone,
+        method: 'GET',
+        headers: {
+          Authorization: 'Token token=' + process.env.ZAMMAD_API_TOKEN
+        },
+        json: true
+      });
+    })
+    .then(data => {
+      if (data.length > 0) {
+        return data[0];
+      } else {
+        // Create a Zammad user
+	      var mobile = String(ticket.call.subscriber_phone);
+        if (mobile.length && ('+' != mobile[0])) {
+          mobile = '+' + mobile;
+        }
+        return rp({
+          uri: ZAMMAD_API_URL + 'users',
+          method: 'POST',
+          body: {
+            email: ticket.call.subscriber_phone + '@uliza.fm',
+            mobile: mobile
+          },
+          headers: {
+            Authorization: 'Token token=' + process.env.ZAMMAD_API_TOKEN
+          },
+          json: true
+        });
+      }
+    })
+    .then(data => {
+      zammadUser = data;
+      var subject = 'Voice question received from Uliza user ' + ticket.call.subscriber_phone;
+      //var body = messageBlock.response.open_audio_file;
+      var payload = {
+        title: `${ticket.campaign.name} [${ticket.call.subscriber_phone}]`,
+        group: ticket.campaign.zammad_group,
+        customer_id: 'guess:' + ticket.call.subscriber_phone + '@uliza.fm',
+        article: {
+          subject: subject,
+          body: subject,
+          attachments: [{
+            filename: messageBlock.response.open_audio_file + '.mp3',
+            data: '###', // Added later to prevent log proliferation
+            'mime-type': 'audio/mp3'
+          }]
+        }
+      };
+      payload.article.attachments[0].data = data;
+      return rp({
+        uri: ZAMMAD_API_URL + 'tickets',
+        method: 'POST',
+        body: payload,
+        headers: {
+          'Authorization': 'Token token=' + process.env.ZAMMAD_API_TOKEN,
+          'X-On-Behalf-Of': zammadUser.login
+        },
+        json: true
+      });
+    })
+    .then(response => {
+      console.log('https://answers.uliza.fm/#ticket/zoom/' + response.id);
+      var query = 'INSERT INTO tickets (subscriber_phone, audio_url, campaign_id, zammad_id, article_count, state_id, first_article_id, monitor, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, 1, DATETIME(\'now\'));';
+      return db.run(query,
+        ticket.call.subscriber_phone,
+        messageBlock.response.open_audio_url,
+        ticket.campaign.id,
+        response.id,
+        response.article_count,
+        response.state_id,
+        response.article_ids[0]
+      );
+    })
+    .then(res => {
       console.log(res.lastID);
     })
     .catch(error => {
@@ -241,6 +315,16 @@ function createTicket(ticket) {
 
 module.exports = function(conn) {
   db = conn; return {
+
+    ulizaTicket: function(req, res) {
+      createUlizaTicket({ 
+        call: { subscriber_phone: req.body.subscriber_phone },
+        audio_url: req.body.audio_url,
+        campaign: { id: 3 }                 // !!
+      });
+      res.status(202);
+      res.json();
+    },
 
     callStatusUpdate: function(req, res) {
       var call = {};

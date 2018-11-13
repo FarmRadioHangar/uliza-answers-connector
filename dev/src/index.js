@@ -69,6 +69,10 @@ db.init().then(conn => {
       });
   });
 
+  router.post('/tickets', (req, res) => {
+    handlers.ulizaTicket(req, res);
+  });
+
   app.listen(SERVER_PORT);
   console.log(`Uliza Answers connector listening on port ${SERVER_PORT}.`);
 
