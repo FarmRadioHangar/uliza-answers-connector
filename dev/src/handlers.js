@@ -274,7 +274,7 @@ function createUlizaTicket(ticket) {
           subject: subject,
           body: subject,
           attachments: [{
-            filename: messageBlock.response.open_audio_file + '.mp3',
+            filename: 'question.mp3',
             data: '###', // Added later to prevent log proliferation
             'mime-type': 'audio/mp3'
           }]
